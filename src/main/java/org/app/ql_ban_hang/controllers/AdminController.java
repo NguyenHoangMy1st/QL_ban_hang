@@ -24,16 +24,19 @@ public class AdminController extends BaseController {
 
         switch (path) {
             case "/dashboard":
-                System.out.println("Admin dashboard");
+                req.setAttribute("currentPage", "dashboard");
                 showDashboard(req, resp);
                 break;
             case "/products":
+                req.setAttribute("currentPage", "products");
                 showProducts(req, resp);
                 break;
             case "/products/edit":
+                req.setAttribute("currentPage", "products");
                 showFormEditProduct(req, resp);
                 break;
             case "/products/create":
+                req.setAttribute("currentPage", "products");
                 showFormCreateProduct(req, resp);
                 break;
             case "/products/delete":
