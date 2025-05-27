@@ -20,13 +20,13 @@ public class AuthService {
             HttpSession session = request.getSession(true);
             if (resultSet.next()) {
                 String id = resultSet.getString("id");
-                String username = resultSet.getString( "username");
+                String name = resultSet.getString( "name");
                 String role = resultSet.getString("role");
 
-                System.out.println("Login success: " + resultSet.getString("username"));
+                System.out.println("Login success: " + resultSet.getString("name"));
 
                 session.setAttribute("idUserLogin", id);
-                session.setAttribute("usernameUserLogin", username);
+                session.setAttribute("nameUserLogin", name);
                 session.setAttribute("roleUserLogin", role);
 
             }

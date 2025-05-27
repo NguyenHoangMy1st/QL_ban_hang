@@ -75,5 +75,10 @@
                 Quản lý Người dùng
             </a>
         </li>
+        <li class="nav-item">
+            <a class="nav-link logout" href="/auth/logout">
+                Đăng xuất
+            </a>
+        </li>
     </ul>
 </div>

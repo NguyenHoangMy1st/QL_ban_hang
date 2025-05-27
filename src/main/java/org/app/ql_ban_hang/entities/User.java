@@ -2,19 +2,28 @@ package org.app.ql_ban_hang.entities;
 
 public class User {
     private int id;
-    private String username;
+    private String name;
     private String password;
     private String rePassword;
-    private String phoneNumber;
+    private String phone;
     private String email;
     private String address;
     private String role;
 
-    public User(String username, String password, String rePassword, String phoneNumber, String email, String address) {
-        this.username = username;
+    public User(int id) {
+        this.id = id;
+    }
+    public User(String name, String phone, String email, String address) {
+        this.name = name;
+        this.phone = phone;
+        this.email = email;
+        this.address = address;
+        this.role = "user";
+    }
+    public User(String name, String password, String phone, String email, String address) {
+        this.name = name;
         this.password = password;
-        this.rePassword = rePassword;
-        this.phoneNumber = phoneNumber;
+        this.phone = phone;
         this.email = email;
         this.address = address;
         this.role = "user";
@@ -27,12 +36,12 @@ public class User {
         this.id = id;
     }
 
-    public String getUsername() {
-        return username;
+    public String getName() {
+        return name;
     }
 
-    public void setUsername(String username) {
-        this.username = username;
+    public void setName(String name) {
+        this.name = name;
     }
 
     public String getPassword() {
@@ -51,12 +60,12 @@ public class User {
         this.rePassword = rePassword;
     }
 
-    public String getPhoneNumber() {
-        return phoneNumber;
+    public String getPhone() {
+        return phone;
     }
 
-    public void setPhoneNumber(String phoneNumber) {
-        this.phoneNumber = phoneNumber;
+    public void setPhone(String phone) {
+        this.phone = phone;
     }
 
     public String getEmail() {

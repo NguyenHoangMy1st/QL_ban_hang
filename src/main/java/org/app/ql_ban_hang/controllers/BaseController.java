@@ -13,4 +13,9 @@ public class BaseController extends HttpServlet {
         RequestDispatcher requestDispatcher = request.getRequestDispatcher(viewPath);
         requestDispatcher.forward(request, response);
     }
+    protected void addNoCacheHeaders(HttpServletResponse resp) {
+        resp.setHeader("Cache-Control", "no-cache, no-store, must-revalidate"); // HTTP 1.1
+        resp.setHeader("Pragma", "no-cache");     // HTTP 1.0
+        resp.setHeader("Expires", "0");           // Proxies
+    }
 }
