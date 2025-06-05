@@ -1,7 +1,7 @@
 <%--
   Created by IntelliJ IDEA.
   User: DELL
-  Date: 5/24/2025 (Ví dụ ngày tạo mới)
+  Date: 5/24/2025
   Time: 8:00 PM
   To change this template use File | Settings | File Templates.
 --%>
@@ -10,99 +10,132 @@
 
 <html>
 <head>
-    <title>Register</title>
-    <link
-            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
-            rel="stylesheet"
-    />
-    <link
-            href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap"
-            rel="stylesheet"
-    />
-    <link
-            href="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/8.0.0/mdb.min.css"
-            rel="stylesheet"
-    />
+    <title>Đăng Ký Tài Khoản</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .register-container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 500px; /* Tăng chiều rộng để phù hợp với các trường mới */
+        }
+        h2 {
+            text-align: center;
+            margin-bottom: 25px;
+            color: #333;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .btn-primary {
+            width: 100%;
+            padding: 10px;
+            font-size: 1.1em;
+        }
+        .alert {
+            margin-bottom: 20px;
+        }
+        .text-center.mb-3 p {
+            margin-bottom: 10px;
+        }
+        .social-buttons .btn {
+            margin: 0 5px;
+        }
+    </style>
 </head>
 <body>
-<div class="container d-flex justify-content-center">
-    <div class="col-md-6">
-        <ul class="nav nav-pills nav-justified mb-3" id="ex1" role="tablist">
-            <li class="nav-item" role="presentation">
-                <a class="nav-link" href="${pageContext.request.contextPath}/auth/login">Login</a>
-            </li>
-            <li class="nav-item" role="presentation">
-                <a class="nav-link active" id="tab-register" href="#pills-register" role="tab"
-                   aria-controls="pills-register" aria-selected="true">Register</a>
-            </li>
-        </ul>
-        <div class="tab-content">
-            <div class="tab-pane fade show active" id="pills-register" role="tabpanel" aria-labelledby="tab-register">
-                <form action="${pageContext.request.contextPath}/auth/register" method="post">
-                    <div class="text-center mb-3">
-                        <p>Sign up with:</p>
-                        <button type="button" data-mdb-button-init data-mdb-ripple-init class="btn btn-link btn-floating mx-1">
-                            <i class="fab fa-facebook-f"></i>
-                        </button>
+<div class="container d-flex justify-content-center align-items-center min-vh-100">
+    <div class="register-container">
 
-                        <button type="button" data-mdb-button-init data-mdb-ripple-init class="btn btn-link btn-floating mx-1">
-                            <i class="fab fa-google"></i>
-                        </button>
+        <h2 class="mb-4">Đăng Ký Tài Khoản Mới</h2>
 
-                        <button type="button" data-mdb-button-init data-mdb-ripple-init class="btn btn-link btn-floating mx-1">
-                            <i class="fab fa-twitter"></i>
-                        </button>
-
-                        <button type="button" data-mdb-button-init data-mdb-ripple-init class="btn btn-link btn-floating mx-1">
-                            <i class="fab fa-github"></i>
-                        </button>
-                    </div>
-
-                    <p class="text-center">or:</p>
-
-                    <div data-mdb-input-init class="form-outline mb-4">
-                        <input type="text" name="name" id="registerName" class="form-control" />
-                        <label class="form-label" for="registerName">Name</label>
-                    </div>
-
-                    <div data-mdb-input-init class="form-outline mb-4">
-                        <input type="text" name="username" id="registerUsername" class="form-control" />
-                        <label class="form-label" for="registerUsername">Username</label>
-                    </div>
-
-                    <div data-mdb-input-init class="form-outline mb-4">
-                        <input type="email" name="email" id="registerEmail" class="form-control" />
-                        <label class="form-label" for="registerEmail">Email</label>
-                    </div>
-
-                    <div data-mdb-input-init class="form-outline mb-4">
-                        <input type="password" name="password" id="registerPassword" class="form-control" />
-                        <label class="form-label" for="registerPassword">Password</label>
-                    </div>
-
-                    <div data-mdb-input-init class="form-outline mb-4">
-                        <input type="password" name="repeatPassword" id="registerRepeatPassword" class="form-control" />
-                        <label class="form-label" for="registerRepeatPassword">Repeat password</label>
-                    </div>
-
-                    <div class="form-check d-flex justify-content-center mb-4">
-                        <input class="form-check-input me-2" type="checkbox" value="" id="registerCheck" checked
-                               aria-describedby="registerCheckHelpText" />
-                        <label class="form-check-label" for="registerCheck">
-                            I have read and agree to the terms
-                        </label>
-                    </div>
-
-                    <button type="submit" class="btn btn-primary mb-3">Sign up</button>
-                </form>
+        <%-- Hiển thị thông báo lỗi --%>
+        <c:if test="${not empty param.error}">
+            <div class="alert alert-danger" role="alert">
+                <c:out value="${param.message}"/>
             </div>
-        </div>
+        </c:if>
+        <%-- Hiển thị thông báo thành công --%>
+        <c:if test="${not empty param.success && param.success eq 'register'}">
+            <div class="alert alert-success" role="alert">
+                Đăng ký tài khoản thành công! Vui lòng <a href="${pageContext.request.contextPath}/auth/login">đăng nhập</a>.
+            </div>
+        </c:if>
+
+        <form action="${pageContext.request.contextPath}/auth/register" method="post">
+            <div class="text-center mb-3 social-buttons">
+                <p>Đăng ký với:</p>
+                <button type="button" class="btn btn-link btn-floating mx-1">
+                    <i class="fab fa-facebook-f"></i>
+                </button>
+                <button type="button" class="btn btn-link btn-floating mx-1">
+                    <i class="fab fa-google"></i>
+                </button>
+                <button type="button" class="btn btn-link btn-floating mx-1">
+                    <i class="fab fa-twitter"></i>
+                </button>
+                <button type="button" class="btn btn-link btn-floating mx-1">
+                    <i class="fab fa-github"></i>
+                </button>
+            </div>
+
+            <p class="text-center">Hoặc:</p>
+
+            <div class="form-group mb-4">
+                <label class="form-label" for="registerName">Họ và Tên</label>
+                <input type="text" name="name" id="registerName" class="form-control" required
+                       value="${param.name != null ? param.name : ''}"/>
+            </div>
+
+            <div class="form-group mb-4">
+                <label class="form-label" for="registerEmail">Email</label>
+                <input type="email" name="email" id="registerEmail" class="form-control" required
+                       value="${param.email != null ? param.email : ''}"/>
+            </div>
+
+            <div class="form-group mb-4">
+                <label class="form-label" for="registerPhone">Số điện thoại</label>
+                <input type="tel" name="phone" id="registerPhone" class="form-control"
+                       value="${param.phone != null ? param.phone : ''}"/>
+            </div>
+
+            <div class="form-group mb-4">
+                <label class="form-label" for="registerAddress">Địa chỉ</label>
+                <input type="text" name="address" id="registerAddress" class="form-control"
+                       value="${param.address != null ? param.address : ''}"/>
+            </div>
+
+            <div class="form-group mb-4">
+                <label class="form-label" for="registerPassword">Mật khẩu</label>
+                <input type="password" name="password" id="registerPassword" class="form-control" required />
+            </div>
+
+            <div class="form-group mb-4">
+                <label class="form-label" for="registerConfirmPassword">Xác nhận mật khẩu</label>
+                <input type="password" name="confirm_password" id="registerConfirmPassword" class="form-control" required />
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block mb-4">Đăng Ký</button>
+
+            <div class="text-center">
+                Bạn đã có tài khoản? <a href="${pageContext.request.contextPath}/auth/login">Đăng nhập</a>
+            </div>
+        </form>
     </div>
 </div>
 
-<script
-        type="text/javascript"
-        src="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/8.0.0/mdb.umd.min.js"
-></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 </body>
 </html>

@@ -2,6 +2,7 @@ package org.app.ql_ban_hang.controllers;
 
 import com.google.gson.Gson;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -18,6 +19,11 @@ import java.io.IOException;
 import java.util.List;
 
 @WebServlet(name = "AdminController", urlPatterns = {"/admin/*"})
+@MultipartConfig(
+        fileSizeThreshold = 1024 * 1024 * 2, // 2MB
+        maxFileSize = 1024 * 1024 * 10,      // 10MB
+        maxRequestSize = 1024 * 1024 * 50    // 50MB
+)
 public class AdminController extends BaseController {
 
     private boolean checkAdminLogin(HttpServletRequest req, HttpServletResponse resp) throws IOException {
@@ -71,6 +77,10 @@ public class AdminController extends BaseController {
             case "/products/delete":
                 ProductService.deleteProduct(req, resp);
                 break;
+            case "/products/search":
+                req.setAttribute("currentPage", "products");
+//                showProductsSearch(req, resp);
+                break;
             case "/users":
                 req.setAttribute("currentPage", "users");
                 showUsers(req, resp);
@@ -86,7 +96,18 @@ public class AdminController extends BaseController {
             case "/users/delete":
 //                ProductService.deleteUser(req, resp);
                 break;
-
+            case "/categories":
+                req.setAttribute("currentPage", "categories");
+                showCategory(req, resp);
+                break;
+            case "/categories/edit":
+                req.setAttribute("currentPage", "categories");
+                showFormEditCategory(req, resp);
+                break;
+            case "/categories/create":
+                req.setAttribute("currentPage", "categories");
+                showFormCreateCategory(req, resp);
+                break;
             default:
                 resp.sendError(HttpServletResponse.SC_NOT_FOUND);
                 break;
@@ -112,11 +133,20 @@ public class AdminController extends BaseController {
             case "/products/edit":
                 ProductService.updateProduct(req, resp);
                 break;
+            case "/products/search":
+                ProductService.findProductByName(req);
+                break;
             case "/users/create":
                 UserService.createUser(req, resp);
                 break;
             case "/users/edit":
                 UserService.updateUser(req, resp);
+                break;
+            case "/categories/create":
+                ProductService.createCategory(req, resp);
+                break;
+            case "/categories/edit":
+                ProductService.updateCategory(req, resp);
                 break;
             default:
                 resp.sendError(HttpServletResponse.SC_NOT_FOUND);
@@ -139,12 +169,13 @@ public class AdminController extends BaseController {
         req.setAttribute("categories", categories);
         renderView("/views/admin/product/list.jsp", req, resp);
     }
+
     private void showDetailProduct(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         resp.setContentType("application/json");
         resp.setCharacterEncoding("UTF-8");
 
         try {
-            Product product = ProductService.getProductById(req, resp);
+            Product product = ProductService.getProductById(req);
 
             Gson gson = new Gson();
             String jsonOutput;
@@ -166,6 +197,11 @@ public class AdminController extends BaseController {
             e.printStackTrace();
         }
     }
+//    private void showProductsSearch(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+//        List<Product> productsSearch = ProductService.getProductSearch(req, resp);
+//        req.setAttribute("productsSearch", productsSearch);
+//        renderView("/views/admin/product/search.jsp", req, resp);
+//    }
     private void showFormCreateProduct(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         List<Category> categories = ProductService.getCategories();
         req.setAttribute("categories", categories);
@@ -173,7 +209,7 @@ public class AdminController extends BaseController {
     }
     private void showFormEditProduct(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         List<Category> categories = ProductService.getCategories();
-        Product currentProduct = ProductService.getProductById(req, resp);
+        Product currentProduct = ProductService.getProductById(req);
         req.setAttribute("product", currentProduct);
         req.setAttribute("categories", categories);
         renderView("/views/admin/product/edit.jsp", req, resp);
@@ -190,5 +226,18 @@ public class AdminController extends BaseController {
         User currentUser = UserService.getUserById(req, resp);
         req.setAttribute("user", currentUser);
         renderView("/views/admin/user/edit.jsp", req, resp);
+    }
+    public void showCategory(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        List<Category> categories = ProductService.getCategories();
+        req.setAttribute("categories", categories);
+        renderView("/views/admin/category/list.jsp", req, resp);
+    }
+    public void showFormCreateCategory(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        renderView("/views/admin/category/create.jsp", req, resp);
+    }
+    public void showFormEditCategory(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        Category currentCategory = ProductService.getCategoryById(req, resp);
+        req.setAttribute("category", currentCategory);
+        renderView("/views/admin/category/edit.jsp", req, resp);
     }
 }

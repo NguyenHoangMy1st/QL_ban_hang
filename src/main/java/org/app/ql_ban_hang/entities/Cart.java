@@ -4,23 +4,30 @@ public class Cart {
     private int id;
     private int quantity;
     private int status; // 0: outCart, 1: inCart
-    private double price;
+    private double priceTotal;
     private Product product;
     private User user;
 
-    public Cart(int quantity, int status, double price, Product product, User user) {
+
+    // thêm sản phẩm vào giỏ
+    public Cart(int quantity, int status, double priceTotal, Product product, User user) {
         this.quantity = quantity;
         this.status = status;
-        this.price = price;
+        this.priceTotal = priceTotal;
         this.product = product;
         this.user = user;
     }
 
+    // cập nhật giỏ hàng
+    public Cart(int quantity, double priceTotal){
+        this.quantity = quantity;
+        this.priceTotal = priceTotal;
+    }
     public int getId() {
         return id;
     }
 
-    public int getBuy_count() {
+    public int getQuantity() {
         return quantity;
     }
 
@@ -32,8 +39,8 @@ public class Cart {
         return product;
     }
 
-    public double getPrice() {
-        return price;
+    public double getPriceTotal() {
+        return priceTotal;
     }
 
     public User getUser() {
@@ -48,12 +55,12 @@ public class Cart {
         this.status = status;
     }
 
-    public void setBuy_count(int quantity) {
+    public void setQuantity(int quantity) {
         this.quantity = quantity;
     }
 
-    public void setPrice(double price) {
-        this.price = price;
+    public void setPriceTotal(double priceTotal) {
+        this.priceTotal = priceTotal;
     }
 
     public void setUser(User user) {

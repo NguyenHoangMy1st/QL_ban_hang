@@ -95,7 +95,7 @@
                 <c:forEach var="product" items="${productList}">
                     <tr>
                         <td><c:out value="${product.getId()}"/></td>
-<%--                        <td><img src="${product.getImage()}" alt="${product.getName()}" class="img-fluid"></td>--%>
+                        <td><img src="${product.getImage()}" alt="${product.getName()}" class="img-fluid"></td>
                         <td><c:out value="${product.getName()}"/></td>
                         <td>
                             <fmt:formatNumber value="${product.price}" type="number" groupingUsed="true" maxFractionDigits="0"/>

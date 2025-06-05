@@ -7,6 +7,8 @@
 --%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %> <%-- THÊM DÒNG NÀY --%>
+
 <c:set var="categories" value="${requestScope['categories']}" />
 <!DOCTYPE html>
 <html lang="en">
@@ -61,6 +63,11 @@
             box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25);
             border-color: #80bdff;
         }
+        .error-message { /* CSS cho thông báo lỗi */
+            color: red;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
     </style>
 </head>
 <body>
@@ -81,40 +88,45 @@
         </div>
     </c:if>
 
-    <form action="/admin/products/create" method="post">
+    <form id="createProductForm" action="/admin/products/create" method="post" enctype="multipart/form-data"> <%-- THÊM ID CHO FORM --%>
         <%-- Trường Tên Sản phẩm --%>
         <div class="mb-3">
             <label for="productName" class="form-label">Tên Sản phẩm <span class="text-danger">*</span></label>
             <input type="text" class="form-control" id="productName" name="name" required
-                   placeholder="Nhập tên sản phẩm">
+                   placeholder="Nhập tên sản phẩm" value="<c:out value="${param.name}"/>"> <%-- Giữ lại giá trị sau khi submit lỗi --%>
         </div>
         <div class="mb-3">
             <label for="productPrice" class="form-label">Giá <span class="text-danger">*</span></label>
-            <input type="number" step="1000" class="form-control" id="productPrice" name="price" required
-                   placeholder="Nhập giá sản phẩm">
+            <input type="number" step="1" class="form-control" id="productPrice" name="price" required
+                   placeholder="Nhập giá sản phẩm" value="<c:out value="${param.price}"/>" <%-- Giữ lại giá trị sau khi submit lỗi --%>
+                   oninput="validatePrice()"> <%-- THÊM oninput để kiểm tra khi người dùng gõ --%>
+            <div id="priceError" class="error-message"></div> <%-- THÊM DIV ĐỂ HIỂN THỊ LỖI --%>
         </div>
         <div class="mb-3">
-            <label for="productPrice" class="form-label">Số lượng <span class="text-danger">*</span></label>
+            <label for="productQuantity" class="form-label">Số lượng <span class="text-danger">*</span></label>
             <input type="number" step="1" class="form-control" id="productQuantity" name="quantity" required
-                   placeholder="Nhập số lượng sản phẩm">
+                   placeholder="Nhập số lượng sản phẩm" value="<c:out value="${param.quantity}"/>"> <%-- Giữ lại giá trị sau khi submit lỗi --%>
         </div>
         <div class="mb-3">
             <label for="productDescription" class="form-label">Mô tả</label>
             <textarea class="form-control" id="productDescription" name="description" rows="4"
-                      placeholder="Mô tả chi tiết về sản phẩm"></textarea>
+                      placeholder="Mô tả chi tiết về sản phẩm"><c:out value="${param.description}"/></textarea> <%-- Giữ lại giá trị sau khi submit lỗi --%>
         </div>
 
-<%--        <div class="mb-3">--%>
-<%--            <label for="productImage" class="form-label">Ảnh Sản phẩm <span class="text-danger">*</span></label>--%>
-<%--            <input type="file" class="form-control" id="productImage" name="image" accept="image/*" required>--%>
-<%--        </div>--%>
+        <div class="mb-3">
+            <label for="productImage" class="form-label">Ảnh Sản phẩm <span class="text-danger">*</span></label>
+            <input type="file" class="form-control" id="productImage" name="image" accept="image/*" required>
+        </div>
 
         <div class="mb-3">
             <label for="productCategory" class="form-label">Danh mục <span class="text-danger">*</span></label>
             <select class="form-select" id="productCategory" name="category_id" required>
-                <option selected>Chọn danh mục</option>
+                <option value="" ${empty param.category_id ? 'selected' : ''}>Chọn danh mục</option>
                 <c:forEach var="category" items="${categories}">
-                    <option value="${category.id}">${category.name}</option>
+                    <option value="${category.id}"
+                        ${param.category_id == category.id ? 'selected' : ''}>
+                        <c:out value="${category.name}"/>
+                    </option>
                 </c:forEach>
             </select>
         </div>
@@ -127,5 +139,36 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+<script>
+    function validatePrice() {
+        const priceInput = document.getElementById('productPrice');
+        const priceErrorDiv = document.getElementById('priceError');
+        const priceValue = parseInt(priceInput.value); // Chuyển sang số nguyên
+
+        if (isNaN(priceValue) || priceValue < 1000 || (priceValue % 1000 !== 0)) {
+            priceErrorDiv.textContent = 'Giá phải là bội số của 1.000 và lớn hơn hoặc bằng 1.000 (ví dụ: 1.000, 25.000, 123.000).';
+            priceInput.classList.add('is-invalid'); // Thêm class báo lỗi của Bootstrap
+            return false;
+        } else {
+            priceErrorDiv.textContent = '';
+            priceInput.classList.remove('is-invalid'); // Xóa class báo lỗi
+            return true;
+        }
+    }
+
+    document.getElementById('createProductForm').addEventListener('submit', function(event) {
+        if (!validatePrice()) {
+            event.preventDefault();
+            alert('Vui lòng kiểm tra lại giá sản phẩm!');
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const priceInput = document.getElementById('productPrice');
+        if (priceInput.value !== '') {
+            validatePrice();
+        }
+    });
+</script>
 </body>
 </html>

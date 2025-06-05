@@ -7,7 +7,7 @@ public class Product {
     private String name;
     private double price;
     private String description;
-//    private String image;
+    private String image;
     private int quantity;
     private Category category;
 //    private int status;
@@ -15,28 +15,31 @@ public class Product {
 //    private List<Review> reviews;
 
 
-    public Product(String name, double price, String description, int quantity) {
+    public Product(){
+
+    }
+    public Product(String name, double price, String description, String image, int quantity) {
         this.name = name;
         this.price = price;
         this.description = description;
-//        this.image = "a";
+        this.image = image;
         this.quantity = quantity;
     }
-    public Product(int id, String name, double price, String description,  int quantity) {
+    public Product(int id, String name, double price, String description, String image,  int quantity) {
         this.id = id;
         this.name = name;
         this.price = price;
         this.description = description;
-//        this.image = "a";
+        this.image = image;
         this.quantity = quantity;
     }
 
-    public Product(int id, String name, double price, String description, Category category, int quantity) {
+    public Product(int id, String name, double price, String description,String image, Category category, int quantity) {
         this.id = id;
         this.name = name;
         this.price = price;
         this.description = description;
-//        this.image = "a";
+        this.image = image;
         this.category = category;
         this.quantity = quantity;
     }
@@ -74,13 +77,13 @@ public class Product {
         this.description = description;
     }
 
-//    public String getImage() {
-//        return image;
-//    }
-//
-//    public void setImage(String image) {
-//        this.image = image;
-//    }
+    public String getImage() {
+        return image;
+    }
+
+    public void setImage(String image) {
+        this.image = image;
+    }
 
     public Category getCategory() {
         return category;
@@ -94,6 +97,18 @@ public class Product {
     }
     public void setQuantity(int quantity) {
         this.quantity = quantity;
+    }
+    @Override
+    public String toString() {
+        return "Product{" +
+                "id='" + id + '\'' +
+                ", name='" + name + '\'' +
+                ", description='" + description + '\'' +
+                ", price=" + price +
+                ", image='" + image + '\'' +
+                ", quantity=" + quantity +
+                ", category='" + category + '\'' +
+                '}';
     }
 }
 

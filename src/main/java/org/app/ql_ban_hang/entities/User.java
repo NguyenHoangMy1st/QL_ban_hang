@@ -4,31 +4,55 @@ public class User {
     private int id;
     private String name;
     private String password;
-    private String rePassword;
-    private String phone;
     private String email;
+    private String phone;
     private String address;
     private String role;
 
-    public User(int id) {
-        this.id = id;
-    }
-    public User(String name, String phone, String email, String address) {
-        this.name = name;
-        this.phone = phone;
-        this.email = email;
-        this.address = address;
+    public User(){
         this.role = "user";
     }
-    public User(String name, String password, String phone, String email, String address) {
+    public User(int id) {
+        this.id = id;
+        this.role = "user";
+    }
+    // Constructor khi không có password (ít dùng cho đăng ký)
+    public User(String name, String email, String phone, String address) {
         this.name = name;
-        this.password = password;
-        this.phone = phone;
         this.email = email;
+        this.phone = phone;
         this.address = address;
         this.role = "user";
     }
 
+    // Constructor đầy đủ cho việc đăng ký
+    public User(String name, String password, String email, String phone, String address) {
+        this.name = name;
+        this.password = password;
+        this.email = email;
+        this.phone = phone;
+        this.address = address;
+        this.role = "user";
+    }
+    // Constructor đầy đủ bao gồm ID và Role (khi đọc từ DB)
+    public User(int id, String name, String password, String email, String phone, String address, String role) {
+        this.id = id;
+        this.name = name;
+        this.password = password;
+        this.email = email;
+        this.phone = phone;
+        this.address = address;
+        this.role = role;
+    }
+
+    public User(int id, String name, String email, String phone, String address, String role) {
+        this.id = id;
+        this.name = name;
+        this.email = email;
+        this.phone = phone;
+        this.address = address;
+        this.role = role;
+    }
     public int getId() {
         return id;
     }
@@ -50,14 +74,6 @@ public class User {
 
     public void setPassword(String password) {
         this.password = password;
-    }
-
-    public String getRePassword() {
-        return rePassword;
-    }
-
-    public void setRePassword(String rePassword) {
-        this.rePassword = rePassword;
     }
 
     public String getPhone() {

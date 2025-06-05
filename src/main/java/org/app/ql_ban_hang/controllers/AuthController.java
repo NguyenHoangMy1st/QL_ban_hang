@@ -9,6 +9,7 @@ import org.app.ql_ban_hang.models.DatabaseModel;
 import org.app.ql_ban_hang.services.AuthService;
 
 import java.io.IOException;
+import java.net.URLEncoder;
 
 @WebServlet(name = "AuthController", value = {"/auth/*"})
 public class AuthController extends BaseController {
@@ -19,6 +20,7 @@ public class AuthController extends BaseController {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        addNoCacheHeaders(resp);
         String path = req.getPathInfo();
         if (path == null || path.equals("/")) {
             resp.sendError(HttpServletResponse.SC_NOT_FOUND);
@@ -31,7 +33,6 @@ public class AuthController extends BaseController {
         switch (path) {
             case "/login":
                 if (isLoggedIn) {
-                    addNoCacheHeaders(resp);
                     if ("admin".equals(role)) {
                         resp.sendRedirect(req.getContextPath() + "/admin/dashboard");
                     } else {
@@ -44,7 +45,6 @@ public class AuthController extends BaseController {
                 break;
             case "/register":
                 if (isLoggedIn) {
-                    addNoCacheHeaders(resp);
                     if ("admin".equals(role)) {
                         resp.sendRedirect(req.getContextPath() + "/admin/dashboard");
                     } else {
@@ -59,7 +59,6 @@ public class AuthController extends BaseController {
                 if (session != null) {
                     session.invalidate();
                 }
-                addNoCacheHeaders(resp);
                 resp.sendRedirect(req.getContextPath() + "/auth/login");
                 break;
             default:
@@ -92,7 +91,25 @@ public class AuthController extends BaseController {
                 }
                 break;
             case "/register":
-                // Handle registration
+                if (AuthService.registerAccount(req, resp)) {
+                    addNoCacheHeaders(resp);
+                    resp.sendRedirect(req.getContextPath() + "/auth/login?success=register");
+                } else {
+                    String errorMessage = (String) req.getAttribute("errorMessage");
+                    if (errorMessage == null || errorMessage.isEmpty()) {
+                        errorMessage = "Đã xảy ra lỗi không xác định khi đăng ký.";
+                    }
+                    String name = req.getParameter("name") != null ? URLEncoder.encode(req.getParameter("name"), "UTF-8") : "";
+                    String email = req.getParameter("email") != null ? URLEncoder.encode(req.getParameter("email"), "UTF-8") : "";
+                    String phone = req.getParameter("phone") != null ? URLEncoder.encode(req.getParameter("phone"), "UTF-8") : "";
+                    String address = req.getParameter("address") != null ? URLEncoder.encode(req.getParameter("address"), "UTF-8") : "";
+
+                    resp.sendRedirect(req.getContextPath() + "/auth/register?error=true&message=" + URLEncoder.encode(errorMessage, "UTF-8")
+                            + "&name=" + name
+                            + "&email=" + email
+                            + "&phone=" + phone
+                            + "&address=" + address);
+                }
                 break;
             default:
                 resp.sendError(HttpServletResponse.SC_NOT_FOUND);

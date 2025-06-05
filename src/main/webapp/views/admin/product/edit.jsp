@@ -7,6 +7,7 @@
 --%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <c:set var="product" value="${requestScope['product']}" /> <%-- Lấy đối tượng sản phẩm từ request --%>
 <c:set var="categories" value="${requestScope['categories']}" /> <%-- Lấy danh sách danh mục từ request --%>
 <!DOCTYPE html>
@@ -62,6 +63,15 @@
             box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25);
             border-color: #80bdff;
         }
+        .product-image {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            padding: 5px;
+            border-radius: 4px;
+        }
     </style>
 </head>
 <body>
@@ -82,7 +92,7 @@
         </div>
     </c:if>
 
-    <form action="/admin/products/edit" method="post">
+    <form id="editProductForm" action="/admin/products/edit" method="post" enctype="multipart/form-data">
         <%-- Hidden field cho ID sản phẩm --%>
         <input type="hidden" name="id" value="${product.getId()}">
 
@@ -94,49 +104,49 @@
         </div>
         <div class="mb-3">
             <label for="productPrice" class="form-label">Giá <span class="text-danger">*</span></label>
-            <input type="number" step="1000" class="form-control" id="productPrice" name="price" required
-                   placeholder="Nhập giá sản phẩm" value="<c:out value="${product.getPrice()}"/> ">
+            <input type="number" step="1" class="form-control" id="productPrice" name="price" required
+                   placeholder="Nhập giá sản phẩm"
+                   value="<fmt:formatNumber value="${product.getPrice()}" pattern="#"/>"
+                   oninput="validatePrice()">
+            <div id="priceError" class="error-message"></div>
         </div>
         <div class="mb-3">
             <label for="productQuantity" class="form-label">Số lượng <span class="text-danger">*</span></label>
             <input type="number" step="1" class="form-control" id="productQuantity" name="quantity" required
-                   placeholder="Nhập số lượng sản phẩm" value="<c:out value="${product.getQuantity()}"/> ">
+                   placeholder="Nhập số lượng sản phẩm" value="<c:out value="${product.getQuantity()}"/>">
         </div>
         <div class="mb-3">
             <label for="productDescription" class="form-label">Mô tả</label>
             <textarea class="form-control" id="productDescription" name="description" rows="4"
-                      placeholder="Mô tả chi tiết về sản phẩm" value="<c:out value="${product.getDescription()}"/> ">${product.getDescription()}</textarea>
+                      placeholder="Mô tả chi tiết về sản phẩm" value="<c:out value="${product.getDescription()}"/>">${product.getDescription()}</textarea>
         </div>
-
-        <%-- Phần này dành cho hiển thị ảnh hiện tại và cho phép upload ảnh mới (nếu bạn muốn) --%>
-        <%-- Nếu bạn đã quyết định không chèn ảnh, bạn có thể bỏ qua phần này hoặc để trống --%>
-<%--        <div class="mb-3">--%>
-<%--            <label class="form-label">Ảnh hiện tại:</label>--%>
-<%--            <c:if test="${not empty product.getImage()}">--%>
-<%--                <img src="${product.getImage()}" alt="${product.getName()}" style="max-width: 150px; display: block; margin-bottom: 10px;">--%>
-<%--            </c:if>--%>
-<%--            <c:if test="${empty product.getImage()}">--%>
-<%--                <p>Không có ảnh.</p>--%>
-<%--            </c:if>--%>
-<%--            &lt;%&ndash; Nếu muốn cho phép upload ảnh mới, uncomment dòng dưới và thêm enctype="multipart/form-data" vào form &ndash;%&gt;--%>
-<%--            &lt;%&ndash; <label for="newProductImage" class="form-label">Thay đổi Ảnh Sản phẩm (Tùy chọn)</label>--%>
-<%--            <input type="file" class="form-control" id="newProductImage" name="new_image" accept="image/*"> &ndash;%&gt;--%>
-<%--        </div>--%>
 
         <div class="mb-3">
-            <label for="productCategory" class="form-label">Danh mục <span class="text-danger">*</span></label>
-            <select class="form-select" id="productCategory" name="category_id" required>
-                <option selected>Chọn danh mục</option> <%-- Giá trị rỗng cho tùy chọn mặc định --%>
-                <c:forEach var="category" items="${categories}">
-                    <c:if test="${product.getCategory().getId() == category.getId()}">
-                        <option selected value="${category.getId()}">${category.getName()}</option>
-                    </c:if>
-                    <c:if test="${product.getCategory().getId() != category.getId()}">
-                        <option value="${category.id}">${category.name}</option>
-                    </c:if>
-                </c:forEach>
-            </select>
+            <label class="form-label">Ảnh hiện tại:</label>
+            <c:choose>
+                <c:when test="${not empty product.getImage()}">
+                    <img src="${pageContext.request.contextPath}${product.getImage()}" alt="${product.getName()}" class="product-image">
+                </c:when>
+            <c:otherwise>
+                <p>Không có ảnh hiện tại.</p>
+            </c:otherwise>
+            </c:choose>
+            <label for="newProductImage" class="form-label">Thay đổi Ảnh Sản phẩm (Tùy chọn)</label>
+            <input type="file" class="form-control" id="newProductImage" name="new_image" accept="image/*">
         </div>
+
+            <div class="mb-3">
+                <label for="productCategory" class="form-label">Danh mục <span class="text-danger">*</span></label>
+                <select class="form-select" id="productCategory" name="category_id" required>
+                    <option value="">Chọn danh mục</option> <%-- Giá trị rỗng cho tùy chọn mặc định --%>
+                    <c:forEach var="category" items="${categories}">
+                        <option value="${category.id}"
+                                <c:if test="${product.getCategory().getId() == category.getId()}">selected</c:if>>
+                            <c:out value="${category.name}"/>
+                        </option>
+                    </c:forEach>
+                </select>
+            </div>
 
         <%-- Thêm các trường status và sold nếu bạn muốn chỉnh sửa chúng --%>
 <%--        <div class="mb-3">--%>
@@ -161,5 +171,33 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+<script>
+    function validatePrice() {
+        const priceInput = document.getElementById('productPrice');
+        const priceErrorDiv = document.getElementById('priceError');
+        const priceValue = parseInt(priceInput.value);
+
+        if (isNaN(priceValue) || priceValue < 1000 || (priceValue % 1000 !== 0)) {
+            priceErrorDiv.textContent = 'Giá phải là bội số của 1.000 và lớn hơn hoặc bằng 1.000 (ví dụ: 1.000, 25.000, 123.000).';
+            priceInput.classList.add('is-invalid');
+            return false;
+        } else {
+            priceErrorDiv.textContent = '';
+            priceInput.classList.remove('is-invalid');
+            return true;
+        }
+    }
+
+    document.getElementById('editProductForm').addEventListener('submit', function(event) {
+        if (!validatePrice()) {
+            event.preventDefault();
+            alert('Vui lòng kiểm tra lại giá sản phẩm!');
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        validatePrice();
+    });
+</script>
 </body>
 </html>

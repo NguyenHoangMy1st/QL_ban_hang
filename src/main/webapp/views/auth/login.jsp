@@ -10,96 +10,119 @@
 
 <html>
 <head>
-  <title>Login</title>
-  <link
-          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
-          rel="stylesheet"
-  />
-  <link
-          href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap"
-          rel="stylesheet"
-  />
-  <link
-          href="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/8.0.0/mdb.min.css"
-          rel="stylesheet"
-  />
+  <title>Đăng Nhập</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    body {
+      background-color: #f8f9fa;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .login-container {
+      background-color: #ffffff;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 400px; /* Chiều rộng phù hợp cho form login */
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 25px;
+      color: #333;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    .btn-primary {
+      width: 100%;
+      padding: 10px;
+      font-size: 1.1em;
+    }
+    .alert {
+      margin-bottom: 20px;
+    }
+    .text-center.mb-3 p {
+      margin-bottom: 10px;
+    }
+    .social-buttons .btn {
+      margin: 0 5px;
+    }
+  </style>
 </head>
 <body>
-<div class="container d-flex justify-content-center">
-  <div class="col-md-6">
-    <ul class="nav nav-pills nav-justified mb-3" id="ex1" role="tablist">
-      <li class="nav-item" role="presentation">
-        <a class="nav-link active" id="tab-login" href="#pills-login" role="tab"
-           aria-controls="pills-login" aria-selected="true">Login</a>
-      </li>
-    </ul>
-    <div class="tab-content">
-      <div class="tab-pane fade show active" id="pills-login" role="tabpanel" aria-labelledby="tab-login">
-        <form action="${pageContext.request.contextPath}/auth/login" method="post">
-          <div class="text-center mb-3">
-            <p>Sign in with:</p>
-            <button  type="button" data-mdb-button-init data-mdb-ripple-init class="btn btn-link btn-floating mx-1">
-              <i class="fab fa-facebook-f"></i>
-            </button>
+<div class="container d-flex justify-content-center align-items-center min-vh-100">
+  <div class="login-container">
 
-            <button  type="button" data-mdb-button-init data-mdb-ripple-init class="btn btn-link btn-floating mx-1">
-              <i class="fab fa-google"></i>
-            </button>
+    <h2 class="mb-4">Đăng Nhập</h2>
 
-            <button  type="button" data-mdb-button-init data-mdb-ripple-init class="btn btn-link btn-floating mx-1">
-              <i class="fab fa-twitter"></i>
-            </button>
-
-            <button  type="button" data-mdb-button-init data-mdb-ripple-init class="btn btn-link btn-floating mx-1">
-              <i class="fab fa-github"></i>
-            </button>
-          </div>
-
-          <p class="text-center">or:</p>
-
-          <c:if test="${not empty error}">
-            <div class="alert alert-danger text-center" role="alert">
-              <c:out value="${error}" />
-            </div>
-          </c:if>
-
-          <div data-mdb-input-init class="form-outline mb-4">
-            <input type="email" name="email" id="loginName" class="form-control" />
-            <label class="form-label" for="loginName">Email or username</label>
-          </div>
-
-          <div data-mdb-input-init class="form-outline mb-4">
-            <input type="password" name="password" id="loginPassword" class="form-control" />
-            <label class="form-label" for="loginPassword">Password</label>
-          </div>
-
-          <div class="row mb-4">
-            <div class="col-md-6 d-flex justify-content-center">
-              <div class="form-check mb-3 mb-md-0">
-                <input class="form-check-input" type="checkbox" value="" id="loginCheck" checked />
-                <label class="form-check-label" for="loginCheck"> Remember me </label>
-              </div>
-            </div>
-
-            <div class="col-md-6 d-flex justify-content-center">
-              <a href="#!">Forgot password?</a>
-            </div>
-          </div>
-
-          <button type="submit" class="btn btn-primary mb-4">Sign in</button>
-
-          <div class="text-center">
-            <p>Not a member? <a href="${pageContext.request.contextPath}/auth/register">Register</a></p>
-          </div>
-        </form>
+    <%-- Hiển thị thông báo lỗi --%>
+    <c:if test="${not empty param.error}">
+      <div class="alert alert-danger" role="alert">
+        <c:out value="${param.message}"/>
       </div>
-    </div>
+    </c:if>
+    <%-- Hiển thị thông báo thành công (ví dụ từ đăng ký thành công) --%>
+    <c:if test="${not empty param.success && param.success eq 'register'}">
+      <div class="alert alert-success" role="alert">
+        Đăng ký tài khoản thành công! Vui lòng đăng nhập.
+      </div>
+    </c:if>
+
+    <form action="${pageContext.request.contextPath}/auth/login" method="post">
+      <div class="text-center mb-3 social-buttons">
+        <p>Đăng nhập với:</p>
+        <button  type="button" class="btn btn-link btn-floating mx-1">
+          <i class="fab fa-facebook-f"></i>
+        </button>
+
+        <button  type="button" class="btn btn-link btn-floating mx-1">
+          <i class="fab fa-google"></i>
+        </button>
+
+        <button  type="button" class="btn btn-link btn-floating mx-1">
+          <i class="fab fa-twitter"></i>
+        </button>
+
+        <button  type="button" class="btn btn-link btn-floating mx-1">
+          <i class="fab fa-github"></i>
+        </button>
+      </div>
+
+      <p class="text-center">Hoặc:</p>
+
+      <div class="form-group mb-4">
+        <label class="form-label" for="loginEmail">Email</label>
+        <input type="email" name="email" id="loginEmail" class="form-control" required
+               value="${param.email != null ? param.email : ''}"/></div>
+
+      <div class="form-group mb-4">
+        <label class="form-label" for="loginPassword">Mật khẩu</label>
+        <input type="password" name="password" id="loginPassword" class="form-control" required />
+      </div>
+
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" value="" id="loginCheck" checked />
+          <label class="form-check-label" for="loginCheck"> Nhớ mật khẩu </label>
+        </div>
+        <a href="#!">Quên mật khẩu?</a>
+      </div>
+
+      <button type="submit" class="btn btn-primary mb-4">Đăng Nhập</button>
+
+      <div class="text-center">
+        <p>Chưa có tài khoản? <a href="${pageContext.request.contextPath}/auth/register">Đăng ký ngay</a></p>
+      </div>
+    </form>
   </div>
 
 </div>
-<script
-        type="text/javascript"
-        src="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/8.0.0/mdb.umd.min.js"
-></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 </body>
 </html>

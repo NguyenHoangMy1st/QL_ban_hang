@@ -29,47 +29,99 @@ public class ProductModel {
         preparedStatement.executeUpdate();
     }
     public static void create(Product product) throws SQLException {
-        String sql = "INSERT INTO products (name, price, description, quantity, category_id) VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO products (name, price, description,image, quantity, category_id) VALUES (?,?, ?, ?, ?, ?)";
         PreparedStatement preparedStatement = conn.prepareStatement(sql);
         preparedStatement.setString(1, product.getName());
         preparedStatement.setDouble(2, product.getPrice());
         preparedStatement.setString(3, product.getDescription());
-//        preparedStatement.setString(4, product.getImage());
-        preparedStatement.setInt(4, product.getQuantity());
+        preparedStatement.setString(4, product.getImage());
+        preparedStatement.setInt(5, product.getQuantity());
         if (product.getCategory() != null) {
-            preparedStatement.setInt(5, product.getCategory().getId());
+            preparedStatement.setInt(6, product.getCategory().getId());
         }else{
-            preparedStatement.setNull(5, java.sql.Types.INTEGER);
+            preparedStatement.setNull(6, java.sql.Types.INTEGER);
         }
         preparedStatement.executeUpdate();
     }
-    public static ResultSet getProductById(int id) throws SQLException {
-        String sql = "SELECT p.*, c.name as category_name \n" +
-                        "FROM products p \n" +
-                        "LEFT JOIN categories c ON p.category_id = c.id \n" +
-                        "WHERE p.id = ?";
-        PreparedStatement preparedStatement = conn.prepareStatement(sql);
-        preparedStatement.setInt(1, id);
-        return preparedStatement.executeQuery();
+
+    public static Product getProductById(int id) throws SQLException {
+        Product product = null;
+        String sql = "SELECT p.*, c.name as category_name " +
+                "FROM products p " +
+                "LEFT JOIN categories c ON p.category_id = c.id " +
+                "WHERE p.id = ?";
+        try (Connection conn = DatabaseModel.getConnection();
+             PreparedStatement preparedStatement = conn.prepareStatement(sql)) {
+            preparedStatement.setInt(1, id);
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    Category category = null;
+                    int categoryId = resultSet.getInt("category_id");
+                    if (!resultSet.wasNull()) { // Kiểm tra nếu category_id không phải NULL
+                        String categoryName = resultSet.getString("category_name");
+                        category = new Category(categoryId, categoryName);
+                    }
+                    product = new Product(
+                            resultSet.getInt("id"),
+                            resultSet.getString("name"),
+                            resultSet.getDouble("price"),
+                            resultSet.getString("description"),
+                            resultSet.getString("image"),
+                            category,
+                            resultSet.getInt("quantity")
+                    );
+                }
+            }
+        }
+        return product;
     }
 
     public static void update(Product product) throws SQLException {
-        String sql = "UPDATE products SET name = ?, price = ?, description = ?,quantity = ?, category_id = ? WHERE id = ?";
+        String sql = "UPDATE products SET name = ?, price = ?, description = ?, image = ?,quantity = ?, category_id = ? WHERE id = ?";
         PreparedStatement preparedStatement = conn.prepareStatement(sql);
         preparedStatement.setString(1, product.getName());
         preparedStatement.setDouble(2, product.getPrice());
         preparedStatement.setString(3, product.getDescription());
-//        preparedStatement.setString(4, product.getImage());
-        preparedStatement.setInt(4, product.getQuantity());
+        preparedStatement.setString(4, product.getImage());
+        preparedStatement.setInt(5, product.getQuantity());
         if (product.getCategory() != null) {
-            preparedStatement.setInt(5, product.getCategory().getId());
+            preparedStatement.setInt(6, product.getCategory().getId());
         } else {
-            preparedStatement.setNull(5, java.sql.Types.INTEGER);
+            preparedStatement.setNull(6, java.sql.Types.INTEGER);
         }
-        preparedStatement.setInt(6, product.getId());
+        preparedStatement.setInt(7, product.getId());
         preparedStatement.executeUpdate();
     }
 
+
+    public static Product findProductByName(String name) throws SQLException {
+        Product product = null;
+        String sql = "SELECT p.*, c.name as category_name FROM products p LEFT JOIN categories c ON p.category_id = c.id WHERE p.name = ?";
+        try (Connection conn = DatabaseModel.getConnection();
+             PreparedStatement preparedStatement = conn.prepareStatement(sql)) {
+            preparedStatement.setString(1, name);
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    Category category = null;
+                    int categoryId = resultSet.getInt("category_id");
+                    if (!resultSet.wasNull()) {
+                        String categoryName = resultSet.getString("category_name");
+                        category = new Category(categoryId, categoryName);
+                    }
+                    product = new Product(
+                            resultSet.getInt("id"),
+                            resultSet.getString("name"),
+                            resultSet.getDouble("price"),
+                            resultSet.getString("description"),
+                            resultSet.getString("image"),
+                            category,
+                            resultSet.getInt("quantity")
+                    );
+                }
+            }
+        }
+        return product;
+    }
     public static List<Product> getProductsByCategory(int categoryId) throws SQLException {
         List<Product> products = new ArrayList<>();
         String sql = "SELECT products.*, categories.name as 'category_name' " +
@@ -89,7 +141,7 @@ public class ProductModel {
                             rs.getString("name"),
                             rs.getDouble("price"),
                             rs.getString("description"),
-//                            rs.getString("image"),
+                            rs.getString("image"),
                             category,
                             rs.getInt("quantity")
                     );
@@ -99,4 +151,5 @@ public class ProductModel {
         }
         return products;
     }
+
 }
