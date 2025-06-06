@@ -66,23 +66,21 @@ public class AuthService {
                 return false;
             }
 
-            // 2. Kiểm tra email đã tồn tại trong cơ sở dữ liệu chưa
+            // Kiểm tra email đã tồn tại trong cơ sở dữ liệu chưa
             if (UserModel.checkEmailExists(email)) {
                 request.setAttribute("errorMessage", "Email này đã được sử dụng. Vui lòng chọn email khác.");
                 return false;
             }
 
-            // 3. Bve mật khẩu
 
             User newUser = new User(name, password, email, phone, address);
 
             System.out.println(newUser);
             UserModel.registerUser(newUser);
-//            response.sendRedirect("/auth/login");
             return true;
         } catch (SQLException e) {
             e.printStackTrace();
-            System.out.println("Lỗi khi đăng ký tài khoản: " + e.getMessage()); // In lỗi ra console
+            System.out.println("Lỗi khi đăng ký tài khoản: " + e.getMessage());
             request.setAttribute("errorMessage", "Đã xảy ra lỗi khi đăng ký tài khoản. Vui lòng thử lại sau.");
             return false;
         } catch (Exception e) {

@@ -1,17 +1,30 @@
-<%-- home.jsp --%>
+<%--
+  Created by IntelliJ IDEA.
+  User: DELL
+  Date: 6/6/2025 (Thời gian hiện tại bạn đang tạo file)
+  Time: 7:45 PM
+  To change this template use File | Settings | File Templates.
+--%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+
 <c:set var="productList" value="${requestScope['productList']}" />
+<c:set var="categories" value="${requestScope['categories']}" />
+<c:set var="currentPage" value="${requestScope['currentPage']}" />
+<c:set var="totalPages" value="${requestScope['totalPages']}" />
+<c:set var="selectedCategoryId" value="${requestScope['selectedCategoryId']}" /> <%-- Thêm dòng này để xử lý danh mục được chọn --%>
+
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trang Chủ - Cửa Hàng</title>
+    <title>Tất Cả Sản Phẩm - YourShop</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
     <style>
+        /* Custom CSS (giữ nguyên hoặc điều chỉnh theo ý muốn) */
         body {
             display: flex;
             flex-direction: column;
@@ -55,6 +68,12 @@
         }
         .form-range::-moz-range-thumb {
             background-color: #0d6efd;
+        }
+        /* Style cho mục danh mục được chọn */
+        .list-group-item.active-category {
+            background-color: #e9ecef; /* Màu nền xám nhạt */
+            font-weight: bold;
+            color: #000;
         }
     </style>
 </head>
@@ -134,9 +153,13 @@
                 </div>
                 <div class="card-body">
                     <ul class="list-group list-group-flush">
-                        <li class="list-group-item"><a href="${pageContext.request.contextPath}/products" class="text-decoration-none text-dark fw-bold">Tất cả danh mục</a></li>
+                        <%-- Link "Tất cả danh mục" --%>
+                        <li class="list-group-item <c:if test="${selectedCategoryId == null || selectedCategoryId == 0}">active-category</c:if>">
+                            <a href="${pageContext.request.contextPath}/products" class="text-decoration-none text-dark fw-bold">Tất cả danh mục</a>
+                        </li>
+                        <%-- Các danh mục động --%>
                         <c:forEach var="category" items="${categories}">
-                            <li class="list-group-item">
+                            <li class="list-group-item <c:if test="${selectedCategoryId != null && selectedCategoryId == category.id}">active-category</c:if>">
                                 <a href="${pageContext.request.contextPath}/products?category=${category.id}" class="text-decoration-none text-dark">
                                     <c:out value="${category.name}"/>
                                 </a>
@@ -161,15 +184,15 @@
         <div class="col-md-9 col-lg-10">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h2>Danh sách sản phẩm</h2>
-                <a href="${pageContext.request.contextPath}/products" class="btn btn-outline-primary">
+                <%-- Có thể bỏ nút "Xem tất cả sản phẩm" này nếu đây đã là trang tất cả sản phẩm --%>
+                <%-- <a href="${pageContext.request.contextPath}/products" class="btn btn-outline-primary">
                     <i class="fas fa-eye me-2"></i>Xem tất cả sản phẩm
-                </a>
+                </a> --%>
             </div>
 
             <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
                 <c:choose>
                     <c:when test="${not empty productList}">
-                        <%-- KHÔNG CÒN begin="0" end="19" NỮA, VÌ CHÚNG TA ĐÃ PHÂN TRANG Ở BACKEND --%>
                         <c:forEach var="product" items="${productList}">
                             <div class="col">
                                 <div class="card h-100 shadow-sm product-item">
@@ -197,20 +220,20 @@
                     <c:otherwise>
                         <div class="col-12">
                             <div class="alert alert-info" role="alert">
-                                Chưa có sản phẩm nào để hiển thị.
+                                Không tìm thấy sản phẩm nào.
                             </div>
                         </div>
                     </c:otherwise>
                 </c:choose>
             </div>
 
-            <%-- LOGIC PHÂN TRANG MỚI --%>
+            <%-- LOGIC PHÂN TRANG --%>
             <c:if test="${totalPages > 1}">
                 <nav aria-label="Page navigation example" class="mt-4">
                     <ul class="pagination justify-content-center">
                             <%-- Nút "Trước" --%>
                         <li class="page-item ${currentPage == 1 ? 'disabled' : ''}">
-                            <a class="page-link" href="${pageContext.request.contextPath}/home?page=${currentPage - 1}" aria-label="Previous">
+                            <a class="page-link" href="${pageContext.request.contextPath}/products?page=${currentPage - 1}<c:if test="${selectedCategoryId != null && selectedCategoryId != 0}">&category=${selectedCategoryId}</c:if>" aria-label="Previous">
                                 <span aria-hidden="true">&laquo;</span>
                             </a>
                         </li>
@@ -218,13 +241,13 @@
                             <%-- Các nút số trang --%>
                         <c:forEach var="i" begin="1" end="${totalPages}">
                             <li class="page-item ${currentPage == i ? 'active' : ''}">
-                                <a class="page-link" href="${pageContext.request.contextPath}/home?page=${i}">${i}</a>
+                                <a class="page-link" href="${pageContext.request.contextPath}/products?page=${i}<c:if test="${selectedCategoryId != null && selectedCategoryId != 0}">&category=${selectedCategoryId}</c:if>">${i}</a>
                             </li>
                         </c:forEach>
 
                             <%-- Nút "Tiếp" --%>
                         <li class="page-item ${currentPage == totalPages ? 'disabled' : ''}">
-                            <a class="page-link" href="${pageContext.request.contextPath}/home?page=${currentPage + 1}" aria-label="Next">
+                            <a class="page-link" href="${pageContext.request.contextPath}/products?page=${currentPage + 1}<c:if test="${selectedCategoryId != null && selectedCategoryId != 0}">&category=${selectedCategoryId}</c:if>" aria-label="Next">
                                 <span aria-hidden="true">&raquo;</span>
                             </a>
                         </li>
@@ -248,7 +271,6 @@
         currentPriceDisplay.textContent = formatCurrency(this.value);
     };
 
-    // Đảm bảo giá trị ban đầu của slider được hiển thị đúng
     currentPriceDisplay.textContent = formatCurrency(priceRange.value);
 </script>
 </body>

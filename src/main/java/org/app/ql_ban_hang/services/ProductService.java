@@ -13,37 +13,50 @@ import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 public class ProductService {
-    public static List<Product> getProducts() {
-        try{
-            ResultSet resultSet = ProductModel.getAllProduct();
-            List<Product> products = new ArrayList<>();
-            while (resultSet.next()) {
-                int pID = resultSet.getInt("id");
-                String pName = resultSet.getString("name");
-                double pPrice = resultSet.getDouble("price");
-                String pDescription = resultSet.getString("description");
-                String pImage = resultSet.getString("image");
-                int pQuantity = resultSet.getInt("quantity");
-                Product product = new Product(pID, pName, pPrice, pDescription,pImage, pQuantity);
-                product.setId(pID);
-
-                int cID = resultSet.getInt("category_id");
-                if (cID != 0) {
-                    String categoryName = resultSet.getString("category_name");
-                    Category category = new Category(cID, categoryName);
-                    product.setCategory(category);
-                }
-                products.add(product);
-            }
-            return products;
-        } catch (Exception e) {
+    private static final int PRODUCTS_PER_PAGE = 20;
+    public static List<Product> getProductsPaged(int page) {
+        int offset = (page - 1) * PRODUCTS_PER_PAGE;
+        try {
+            return ProductModel.getProductsPaged(PRODUCTS_PER_PAGE, offset);
+        } catch (SQLException e) {
             e.printStackTrace();
-            System.out.println("Error in getProducts");
+            System.err.println("Error getting paged products: " + e.getMessage());
+            return Collections.emptyList();
         }
-        return null;
+    }
+    public static int getTotalPages() {
+        try {
+            int totalProducts = ProductModel.getTotalProductCount();
+            return (int) Math.ceil((double) totalProducts / PRODUCTS_PER_PAGE);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.err.println("Error getting total product count: " + e.getMessage());
+            return 1;
+        }
+    }
+    public static List<Product> getProductsPagedAndFiltered(int page, Integer categoryId) {
+        int offset = (page - 1) * PRODUCTS_PER_PAGE;
+        try {
+            return ProductModel.getProductsPagedAndFiltered(PRODUCTS_PER_PAGE, offset, categoryId);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.err.println("Error getting paged and filtered products from model: " + e.getMessage());
+            return Collections.emptyList();
+        }
+    }
+    public static int getTotalPagesFiltered(Integer categoryId) {
+        try {
+            int totalProducts = ProductModel.getTotalProductCountFiltered(categoryId);
+            return (int) Math.ceil((double) totalProducts / PRODUCTS_PER_PAGE);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.err.println("Error getting total filtered pages from model: " + e.getMessage());
+            return 1;
+        }
     }
     public static void deleteProduct(HttpServletRequest request, HttpServletResponse response) {
         try {
@@ -75,7 +88,7 @@ public class ProductService {
 
             if (filePart != null && filePart.getSize() > 0 && getFileName(filePart) != null && !getFileName(filePart).isEmpty()) {
                 String fileName = getFileName(filePart);
-                String uniqueFileName = UUID.randomUUID().toString() + "_" + fileName; // Tạo tên file duy nhất
+                String uniqueFileName = UUID.randomUUID().toString() + "_" + fileName;
 
                 String uploadDirectory = request.getServletContext().getRealPath("") + File.separator + "uploads" + File.separator + "products";
                 File uploadDir = new File(uploadDirectory);
@@ -95,11 +108,10 @@ public class ProductService {
                 throw new IllegalArgumentException("Danh mục sản phẩm không hợp lệ.");
             }
 
-            // Tạo đối tượng Product và gán Category đã tìm thấy
             Product product = new Product(name, price, description, imagePath, quantity);
-            product.setCategory(category); // Gán đối tượng Category trực tiếp
+            product.setCategory(category);
 
-            ProductModel.create(product); // Tạo sản phẩm trong DB
+            ProductModel.create(product);
             response.sendRedirect(request.getContextPath() + "/admin/products?success=create");
 
         } catch (Exception e) {
@@ -135,7 +147,7 @@ public class ProductService {
         }
         return null;
     }
-    public static Product getProductById(HttpServletRequest request) { // Bỏ HttpServletResponse resp vì không cần thiết
+    public static Product getProductById(HttpServletRequest request) {
         try{
             String idParam = request.getParameter("id");
             if (idParam == null || idParam.isEmpty()) {
@@ -143,7 +155,7 @@ public class ProductService {
                 return null;
             }
             int id = Integer.parseInt(idParam);
-            return ProductModel.getProductById(id); // Gọi phương thức mới trong ProductModel
+            return ProductModel.getProductById(id);
         } catch (NumberFormatException e) {
             System.out.println("Error: Invalid Product ID format: " + e.getMessage());
             e.printStackTrace();
@@ -153,7 +165,6 @@ public class ProductService {
         }
         return null;
     }
-    // Overload cho phương thức getProductById(int id) để tiện gọi từ các phương thức khác trong Service
     public static Product ProductById(int id) {
         try {
             return ProductModel.getProductById(id);
@@ -172,10 +183,10 @@ public class ProductService {
             int quantity = Integer.parseInt(request.getParameter("quantity"));
             int categoryId = Integer.parseInt(request.getParameter("category_id"));
 
-            Product existingProduct = ProductById(id); // Gọi overload của getProductById
+            Product existingProduct = ProductById(id);
             String currentImage = (existingProduct != null) ? existingProduct.getImage() : null;
 
-            Part filePart = request.getPart("new_image"); // Tên input file cho ảnh mới trong form update
+            Part filePart = request.getPart("new_image");
             if (filePart != null && filePart.getSize() > 0 && getFileName(filePart) != null && !getFileName(filePart).isEmpty()) {
                 if (currentImage != null && !currentImage.isEmpty() && !currentImage.endsWith("/images/default_product.jpg")) {
                     String oldFilePath = request.getServletContext().getRealPath("") + currentImage.replace(request.getContextPath(), "");
@@ -201,12 +212,11 @@ public class ProductService {
 
             Product product = new Product(id, name, price, description, currentImage, quantity);
 
-            // Giả định CategoryModel.getCategoryById trả về một đối tượng Category
             Category category = CategoryModel.getCategoryById(categoryId);
             if (category != null) {
                 product.setCategory(category);
             } else {
-                product.setCategory(null); // Nếu category không tìm thấy, đặt là null
+                product.setCategory(null);
             }
 
             ProductModel.update(product);
@@ -223,24 +233,26 @@ public class ProductService {
         }
     }
 
-    public static Product findProductByName(HttpServletRequest request) { // Bỏ HttpServletResponse resp
+    public static List<Product> searchProducts(String searchTerm, int page) {
+        int offset = (page - 1) * PRODUCTS_PER_PAGE;
         try {
-            String fName = request.getParameter("name");
-            if (fName == null || fName.trim().isEmpty()) {
-                System.out.println("Error: Product name is missing for findProductByName.");
-                return null;
-            }
-            // Gọi ProductModel.findProductByName() đã được cập nhật để trả về đối tượng Product
-            Product product = ProductModel.findProductByName(fName);
-
-            // ProductModel.findProductByName() đã xử lý việc lấy Category, nên không cần làm lại ở đây
-            return product;
-
-        } catch (SQLException e) { // Bắt SQLException
+            return ProductModel.searchProducts(searchTerm != null ? searchTerm : "", PRODUCTS_PER_PAGE, offset);
+        } catch (SQLException e) {
             e.printStackTrace();
-            System.out.println("Error in ProductService.findProductByName: " + e.getMessage());
+            System.err.println("Error in ProductService.searchProducts: " + e.getMessage());
+            return Collections.emptyList();
         }
-        return null;
+    }
+
+    public static int getTotalSearchPages(String searchTerm) {
+        try {
+            int totalProducts = ProductModel.getTotalProductCountBySearchTerm(searchTerm != null ? searchTerm : "");
+            return (int) Math.ceil((double) totalProducts / PRODUCTS_PER_PAGE);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.err.println("Error in ProductService.getTotalSearchPages: " + e.getMessage());
+            return 1;
+        }
     }
     public static void getProductSearch(HttpServletRequest request, HttpServletResponse response) {
         try {
@@ -256,12 +268,9 @@ public class ProductService {
             Category category = CategoryModel.getCategoryById(id);
             return category;
         } catch (NumberFormatException e) {
-            // Xử lý lỗi nếu 'id' không phải là số
             System.err.println("Lỗi: ID danh mục không hợp lệ. " + e.getMessage());
-            // Có thể thêm response.sendError(HttpServletResponse.SC_BAD_REQUEST) ở đây nếu cần
             return null;
         } catch (Exception e) {
-            // Bắt các lỗi khác (ví dụ: SQLException từ CategoryModel.getCategoryById)
             e.printStackTrace();
             System.err.println("Lỗi khi lấy danh mục theo ID: " + e.getMessage());
             return null;

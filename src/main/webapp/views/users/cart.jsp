@@ -35,15 +35,22 @@
             width: 70px;
             text-align: center;
         }
-        /* Style cho thông báo lỗi */
-        .error-message {
-            color: #dc3545; /* Đỏ */
-            background-color: #f8d7da; /* Nền đỏ nhạt */
-            border: 1px solid #f5c6cb;
+        /* Style cho thông báo lỗi và thành công */
+        .message-box {
             border-radius: .25rem;
             padding: .75rem 1.25rem;
             margin-bottom: 1rem;
             text-align: center;
+        }
+        .error-message {
+            color: #dc3545; /* Đỏ */
+            background-color: #f8d7da; /* Nền đỏ nhạt */
+            border: 1px solid #f5c6cb;
+        }
+        .success-message {
+            color: #0f5132; /* Xanh lá đậm */
+            background-color: #d1e7dd; /* Nền xanh lá nhạt */
+            border: 1px solid #badbcc;
         }
     </style>
 </head>
@@ -51,7 +58,7 @@
 
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top shadow-sm">
     <div class="container-fluid">
-        <a class="navbar-brand fs-4 fw-bold" href="${pageContext.request.contextPath}/home">YourShop</a>
+        <a class="navbar-brand fs-4 fw-bold" href="${pageContext.request.contextPath}/home">KinShop</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
@@ -110,10 +117,43 @@
 <div class="container py-4">
     <h2 class="mb-4 text-center">Giỏ Hàng Của Bạn</h2>
 
-    <%-- Hiển thị thông báo lỗi nếu có --%>
-    <c:if test="${not empty errorMessage}">
-        <div class="error-message">
-            <i class="fas fa-exclamation-triangle me-2"></i>${errorMessage}
+    <%-- Hiển thị thông báo thành công hoặc lỗi --%>
+    <c:if test="${param.success != null}">
+        <div class="message-box success-message">
+            <c:choose>
+                <c:when test="${param.success eq 'added'}">
+                    <i class="fas fa-check-circle me-2"></i> Sản phẩm đã được thêm vào giỏ hàng thành công!
+                </c:when>
+                <c:when test="${param.success eq 'updated'}">
+                    <i class="fas fa-check-circle me-2"></i> Giỏ hàng đã được cập nhật thành công!
+                </c:when>
+                <c:when test="${param.success eq 'removed'}">
+                    <i class="fas fa-check-circle me-2"></i> Sản phẩm đã được xóa khỏi giỏ hàng!
+                </c:when>
+            </c:choose>
+        </div>
+    </c:if>
+
+    <c:if test="${param.error != null}">
+        <div class="message-box error-message">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <c:choose>
+                <c:when test="${param.error eq 'invalid_quantity'}">
+                    Số lượng không hợp lệ. Vui lòng nhập số lượng lớn hơn 0 và không vượt quá số lượng tồn kho.
+                </c:when>
+                <c:when test="${param.error eq 'update_failed'}">
+                    Không thể cập nhật giỏ hàng. Vui lòng thử lại.
+                </c:when>
+                <c:when test="${param.error eq 'remove_failed'}">
+                    Không thể xóa sản phẩm khỏi giỏ hàng. Vui lòng thử lại.
+                </c:when>
+                <c:when test="${param.error eq 'invalid_input'}">
+                    Dữ liệu đầu vào không hợp lệ.
+                </c:when>
+                <c:otherwise>
+                    Đã xảy ra lỗi. Vui lòng thử lại.
+                </c:otherwise>
+            </c:choose>
         </div>
     </c:if>
 
@@ -128,10 +168,8 @@
                             <h5 class="card-title mb-4">Sản phẩm trong giỏ hàng</h5>
                             <div class="list-group list-group-flush">
                                 <c:forEach var="cartItem" items="${carts}">
-                                    <%-- cartItem là một đối tượng Cart, có Product bên trong --%>
                                     <c:set var="product" value="${cartItem.product}"/>
 
-                                    <%-- priceTotal trong Cart entity là tổng giá của dòng sản phẩm đó --%>
                                     <c:set var="itemTotalPrice" value="${cartItem.priceTotal}"/>
                                     <c:set var="totalCartPrice" value="${totalCartPrice + itemTotalPrice}"/>
 
@@ -139,23 +177,22 @@
                                         <img src="${product.image}" class="cart-item-img me-3" alt="${product.name}">
                                         <div class="flex-grow-1">
                                             <h6 class="mb-1"><a href="${pageContext.request.contextPath}/product/detail?id=${product.id}" class="text-decoration-none text-dark">${product.name}</a></h6>
-                                                <%-- Đơn giá sản phẩm: dùng product.price --%>
                                             <p class="mb-1 text-muted small">Đơn giá: <fmt:formatNumber value="${product.price}" type="currency" currencySymbol="VNĐ" maxFractionDigits="0"/></p>
                                         </div>
                                         <div class="d-flex align-items-center me-3">
                                             <form action="${pageContext.request.contextPath}/cart/update" method="post" class="d-flex align-items-center me-2">
-                                                <input type="hidden" name="productId" value="${product.id}">
-                                                    <%-- quantity trong Cart entity --%>
+                                                    <%-- THAY ĐỔI: Sử dụng cartItem.id thay vì product.id --%>
+                                                <input type="hidden" name="cartId" value="${cartItem.id}">
                                                 <input type="number" name="quantity" value="${cartItem.quantity}" min="1" max="${product.quantity}" class="form-control quantity-input" onchange="this.form.submit()">
                                             </form>
                                         </div>
                                         <div class="text-nowrap me-3 fw-bold text-danger">
-                                                <%-- Tổng giá của dòng sản phẩm: dùng cartItem.priceTotal --%>
                                             <fmt:formatNumber value="${itemTotalPrice}" type="currency" currencySymbol="VNĐ" maxFractionDigits="0"/>
                                         </div>
                                         <form action="${pageContext.request.contextPath}/cart/remove" method="post">
-                                            <input type="hidden" name="productId" value="${product.id}">
-                                            <button type="submit" class="btn btn-outline-danger btn-sm">
+                                                <%-- THAY ĐỔI: Sử dụng cartItem.id thay vì product.id --%>
+                                            <input type="hidden" name="cartId" value="${cartItem.id}">
+                                            <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('Bạn có chắc chắn muốn xóa sản phẩm này khỏi giỏ hàng?');">
                                                 <i class="fas fa-trash-alt"></i>
                                             </button>
                                         </form>

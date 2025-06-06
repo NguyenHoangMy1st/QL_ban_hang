@@ -62,7 +62,7 @@ public class UserModel {
         preparedStatement.setString(6, user.getRole());
 
         preparedStatement.executeUpdate();
-        preparedStatement.close(); // Quan trọng: Đóng PreparedStatement
+        preparedStatement.close();
     }
     public static void update(User user) throws SQLException {
         String sql = "UPDATE users SET name = ?, email = ?, phone = ?, address = ?, role = ? WHERE id = ?";
@@ -103,7 +103,6 @@ public class UserModel {
                 );
             }
         } finally {
-            // Đóng tài nguyên an toàn
             if (rs != null) try { rs.close(); } catch (SQLException e) { e.printStackTrace(); }
             if (ps != null) try { ps.close(); } catch (SQLException e) { e.printStackTrace(); }
             if (conn != null) try { conn.close(); } catch (SQLException e) { e.printStackTrace(); }

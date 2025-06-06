@@ -54,13 +54,15 @@
 
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top shadow-sm">
     <div class="container-fluid">
-        <a class="navbar-brand fs-4 fw-bold" href="${pageContext.request.contextPath}/home">YourShop</a>
+        <a class="navbar-brand fs-4 fw-bold" href="${pageContext.request.contextPath}/home">KinShop</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
-            <form class="d-flex mx-auto my-2 my-lg-0 flex-grow-1" role="search" style="max-width: 500px;">
-                <input class="form-control me-2" type="search" placeholder="Tìm kiếm sản phẩm..." aria-label="Search">
+            <form class="d-flex mx-auto my-2 my-lg-0 flex-grow-1" role="search" style="max-width: 500px;"
+                  action="${pageContext.request.contextPath}/products/search" method="get">
+                <input class="form-control me-2" type="search" placeholder="Tìm kiếm sản phẩm..." aria-label="Search" name="name"
+                       value="${searchTerm != null ? searchTerm : ''}">
                 <button class="btn btn-outline-light" type="submit"><i class="fas fa-search"></i></button>
             </form>
 
@@ -154,7 +156,13 @@
                     <form action="${pageContext.request.contextPath}/cart/add" method="post" class="d-flex align-items-center">
                         <input type="hidden" name="productId" value="${product.id}">
                         <label for="quantity" class="form-label me-3 mb-0">Số lượng:</label>
-                        <input type="number" id="quantity" name="quantity" class="form-control me-3" value="1" min="1" max="${product.quantity}" style="width: 100px;">
+                        <input type="number" id="quantity" name="quantity" class="form-control me-3" value="1" min="1" max="${product.quantity}" required style="width: 100px;">
+                        <c:if test="${param.error eq 'invalid_quantity'}">
+                            <div class="alert alert-danger" role="alert">Số lượng không hợp lệ hoặc vượt quá số lượng tồn kho.</div>
+                        </c:if>
+                        <c:if test="${param.error eq 'cart_add_failed'}">
+                            <div class="alert alert-danger" role="alert">Thêm sản phẩm vào giỏ hàng thất bại. Vui lòng thử lại.</div>
+                        </c:if>
                         <button type="submit" class="btn btn-primary btn-lg">
                             <i class="fas fa-cart-plus me-2"></i>Thêm vào giỏ
                         </button>

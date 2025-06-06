@@ -23,7 +23,7 @@ public class CategoryModel {
             PreparedStatement preparedStatement = conn.prepareStatement(sql);
             preparedStatement.setInt(1, id);
             ResultSet resultSet = preparedStatement.executeQuery();
-            if (resultSet.next()) { // Kiểm tra xem có dòng dữ liệu nào trả về không
+            if (resultSet.next()) {
                 int categoryId = resultSet.getInt("id");
                 String categoryName = resultSet.getString("name");
                 category = new Category(categoryId, categoryName);

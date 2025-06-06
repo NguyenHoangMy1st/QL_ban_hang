@@ -16,6 +16,8 @@ import org.app.ql_ban_hang.services.ProductService;
 import org.app.ql_ban_hang.services.UserService;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.util.Collections;
 import java.util.List;
 
 @WebServlet(name = "AdminController", urlPatterns = {"/admin/*"})
@@ -61,7 +63,7 @@ public class AdminController extends BaseController {
                 break;
             case "/products":
                 req.setAttribute("currentPage", "products");
-                showProducts(req, resp);
+                showAllProductsPage(req, resp);
                 break;
             case "/products/detail":
                 showDetailProduct(req, resp);
@@ -76,10 +78,6 @@ public class AdminController extends BaseController {
                 break;
             case "/products/delete":
                 ProductService.deleteProduct(req, resp);
-                break;
-            case "/products/search":
-                req.setAttribute("currentPage", "products");
-//                showProductsSearch(req, resp);
                 break;
             case "/users":
                 req.setAttribute("currentPage", "users");
@@ -133,9 +131,9 @@ public class AdminController extends BaseController {
             case "/products/edit":
                 ProductService.updateProduct(req, resp);
                 break;
-            case "/products/search":
-                ProductService.findProductByName(req);
-                break;
+//            case "/products/search":
+//                handleProductSearch(req, resp);
+//                break;
             case "/users/create":
                 UserService.createUser(req, resp);
                 break;
@@ -162,11 +160,36 @@ public class AdminController extends BaseController {
     private void showDashboard(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         renderView("/views/admin/dashboard.jsp", req, resp);
     }
-    private void showProducts(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        List<Product> productList = ProductService.getProducts();
-        req.setAttribute("productList", productList);
+    private void showAllProductsPage(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        int currentPage = 1;
+        String pageParam = req.getParameter("page");
+        if (pageParam != null && !pageParam.isEmpty()) {
+            try {
+                currentPage = Integer.parseInt(pageParam);
+                if (currentPage < 1) currentPage = 1;
+            } catch (NumberFormatException e) {
+                System.err.println("Invalid page parameter: " + pageParam);
+                currentPage = 1;
+            }
+        }
+
+        List<Product> products = ProductService.getProductsPaged(currentPage);
+        int totalPages = ProductService.getTotalPages();
+
         List<Category> categories = ProductService.getCategories();
+
+        if (products == null) {
+            products = Collections.emptyList();
+        }
+        if (categories == null) {
+            categories = Collections.emptyList();
+        }
+
+        req.setAttribute("productList", products);
         req.setAttribute("categories", categories);
+        req.setAttribute("currentPage", currentPage);
+        req.setAttribute("totalPages", totalPages);
+
         renderView("/views/admin/product/list.jsp", req, resp);
     }
 
@@ -197,11 +220,7 @@ public class AdminController extends BaseController {
             e.printStackTrace();
         }
     }
-//    private void showProductsSearch(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-//        List<Product> productsSearch = ProductService.getProductSearch(req, resp);
-//        req.setAttribute("productsSearch", productsSearch);
-//        renderView("/views/admin/product/search.jsp", req, resp);
-//    }
+
     private void showFormCreateProduct(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         List<Category> categories = ProductService.getCategories();
         req.setAttribute("categories", categories);

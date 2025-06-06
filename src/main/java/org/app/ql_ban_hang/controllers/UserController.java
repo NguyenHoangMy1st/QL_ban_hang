@@ -14,10 +14,11 @@ import org.app.ql_ban_hang.services.ProductService;
 import org.app.ql_ban_hang.services.UserService;
 
 import java.io.IOException;
+import java.net.URLEncoder;
 import java.util.Collections;
 import java.util.List;
 
-@WebServlet(name = "UserController", urlPatterns = {"/home", "/products", "/product/*", "/cart", "/checkout", "/orders", "/profile"})
+@WebServlet(name = "UserController", urlPatterns = {"/home", "/products/*", "/product/*", "/cart/*", "/checkout", "/orders", "/profile"})
 public class UserController extends BaseController {
 
     @Override
@@ -49,7 +50,9 @@ public class UserController extends BaseController {
         } else if (requestURI.equals("/home")) {
             showHomePage(req, resp);
         } else if (requestURI.equals("/products")) {
-            resp.sendError(HttpServletResponse.SC_NOT_FOUND);
+            showAllProductsPage(req, resp);
+        } else if(requestURI.equals("/products/search")){
+            handleProductSearch(req, resp);
         } else if (requestURI.equals("/cart")) {
             if (!checkUserLogin(req, resp)) {
                 return;
@@ -86,6 +89,9 @@ public class UserController extends BaseController {
 
         switch (requestURI) {
             case "/cart/add":
+                if (!checkUserLogin(req, resp)) {
+                    return;
+                }
                 addToCart(req, resp);
                 break;
             case "/cart/update":
@@ -124,22 +130,132 @@ public class UserController extends BaseController {
     }
 
     private void showHomePage(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        List<Product> products = ProductService.getProducts();
+        int currentPage = 1;
+        String pageParam = req.getParameter("page");
+        if (pageParam != null && !pageParam.isEmpty()) {
+            try {
+                currentPage = Integer.parseInt(pageParam);
+                if (currentPage < 1) currentPage = 1;
+            } catch (NumberFormatException e) {
+                System.err.println("Invalid page parameter: " + pageParam);
+                currentPage = 1;
+            }
+        }
+
+        List<Product> products = ProductService.getProductsPaged(currentPage);
+        int totalPages = ProductService.getTotalPages();
+
         List<Category> categories = ProductService.getCategories();
+
         if (products == null) {
             products = Collections.emptyList();
-            System.err.println("Warning: ProductService.getProducts() returned null. Initializing with empty list.");
+            System.err.println("Warning: ProductService.getProductsPaged() returned null. Initializing with empty list.");
         }
-        if (categories == null) {
+        if (categories == null) { // Tương tự
             categories = Collections.emptyList();
             System.err.println("Warning: ProductService.getCategories() returned null. Initializing with empty list.");
         }
+
         req.setAttribute("productList", products);
         req.setAttribute("categories", categories);
+        req.setAttribute("currentPage", currentPage); // Truyền trang hiện tại
+        req.setAttribute("totalPages", totalPages);   // Truyền tổng số trang
 
         renderView("/views/users/home.jsp", req, resp);
     }
+    private void showAllProductsPage(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        int currentPage = 1;
+        String pageParam = req.getParameter("page");
+        if (pageParam != null && !pageParam.isEmpty()) {
+            try {
+                currentPage = Integer.parseInt(pageParam);
+                if (currentPage < 1) currentPage = 1;
+            } catch (NumberFormatException e) {
+                System.err.println("Invalid page parameter: " + pageParam);
+                currentPage = 1;
+            }
+        }
+        Integer selectedCategoryId = null; // Mặc định là không lọc
+        String categoryParam = req.getParameter("category");
+        if (categoryParam != null && !categoryParam.isEmpty()) {
+            try {
+                selectedCategoryId = Integer.parseInt(categoryParam);
+                // Nếu categoryId là 0 hoặc âm, coi như không lọc
+                if (selectedCategoryId <= 0) {
+                    selectedCategoryId = null;
+                }
+            } catch (NumberFormatException e) {
+                System.err.println("Invalid category parameter: " + categoryParam);
+                selectedCategoryId = null; // Không lọc nếu tham số không hợp lệ
+            }
+        }
+        List<Product> products = ProductService.getProductsPagedAndFiltered(currentPage, selectedCategoryId);
+        int totalPages = ProductService.getTotalPagesFiltered(selectedCategoryId); // Lấy tổng số trang có lọc
 
+        List<Category> categories = ProductService.getCategories();
+
+        if (products == null) {
+            products = Collections.emptyList();
+        }
+        if (categories == null) {
+            categories = Collections.emptyList();
+        }
+
+        req.setAttribute("productList", products);
+        req.setAttribute("categories", categories);
+        req.setAttribute("currentPage", currentPage);
+        req.setAttribute("totalPages", totalPages);
+
+        renderView("/views/users/products.jsp", req, resp); // Giả sử bạn có products.jsp
+    }
+    private void handleProductSearch(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        String searchTerm = req.getParameter("name");
+
+        int currentPage = 1;
+        String pageParam = req.getParameter("page");
+        if (pageParam != null && !pageParam.isEmpty()) {
+            try {
+                currentPage = Integer.parseInt(pageParam);
+                if (currentPage < 1) currentPage = 1;
+            } catch (NumberFormatException e) {
+                System.err.println("Invalid page parameter for search: " + pageParam);
+                currentPage = 1;
+            }
+        }
+
+        List<Product> products = Collections.emptyList();
+        int totalPages = 1;
+        String errorMessage = null;
+        String successMessage = null;
+
+        if (searchTerm == null || searchTerm.trim().isEmpty()) {
+            errorMessage = "Vui lòng nhập tên sản phẩm để tìm kiếm.";
+        } else {
+            products = ProductService.searchProducts(searchTerm, currentPage);
+            totalPages = ProductService.getTotalSearchPages(searchTerm);
+
+            if (products.isEmpty()) {
+                errorMessage = "Không tìm thấy sản phẩm nào khớp với: '" + searchTerm + "'.";
+            } else {
+                successMessage = "Kết quả tìm kiếm cho: '" + searchTerm + "'.";
+            }
+        }
+
+        List<Category> categories = ProductService.getCategories();
+        if (categories == null) {
+            categories = Collections.emptyList();
+        }
+
+        req.setAttribute("productList", products);
+        req.setAttribute("categories", categories);
+        req.setAttribute("currentPage", currentPage);
+        req.setAttribute("totalPages", totalPages);
+        req.setAttribute("searchTerm", searchTerm);
+        req.setAttribute("errorMessage", errorMessage);
+        req.setAttribute("successMessage", successMessage);
+
+        renderView("/views/users/products.jsp", req, resp);
+    }
     private void handleProductDetails(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String productIdParam = req.getParameter("id");
         if (productIdParam == null || productIdParam.isEmpty()) {
@@ -164,11 +280,6 @@ public class UserController extends BaseController {
         List<Cart> cartItems = CartService.getCartItemsForCurrentUser(req, 1);
         for (int i = 0; i < cartItems.size(); i++) {
             Cart item = cartItems.get(i);
-            System.out.println("--- Thông tin CartItem #" + (i + 1) + " ---");
-            System.out.println("Cart ID: " + item.getId());
-            System.out.println("Quantity: " + item.getQuantity());
-            System.out.println("Status: " + item.getStatus());
-            System.out.println("Price Total (Cart Item): " + item.getPriceTotal());
         }
 
             req.setAttribute("cartItems", cartItems);
@@ -190,20 +301,96 @@ public class UserController extends BaseController {
     }
 
     private void addToCart(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        String productId = req.getParameter("productId");
-        String quantity = req.getParameter("quantity");
-        resp.sendRedirect(req.getContextPath() + "/cart?added=" + productId);
+        String productIdParam = req.getParameter("productId");
+        String quantityParam = req.getParameter("quantity");
+        int productId = 0;
+        int quantity = 0;
+        String redirectUrl = req.getContextPath() + "/cart";
+
+        try {
+            productId = Integer.parseInt(productIdParam);
+            quantity = Integer.parseInt(quantityParam);
+
+            if (quantity <= 0) {
+                req.setAttribute("errorMessage", "Số lượng sản phẩm phải lớn hơn 0.");
+                resp.sendRedirect(req.getContextPath() + "/product/detail?id=" + productId + "&error=invalid_quantity");
+                return;
+            }
+
+            boolean success = CartService.addProductToCart(req, productId, quantity);
+
+            if (success) {
+                redirectUrl += "?success=added";
+                resp.sendRedirect(redirectUrl);
+            } else {
+                req.setAttribute("errorMessage", "Không thể thêm sản phẩm vào giỏ hàng. Vui lòng thử lại.");
+                resp.sendRedirect(req.getContextPath() + "/product/detail?id=" + productId + "&error=cart_add_failed");
+            }
+
+        } catch (NumberFormatException e) {
+            System.err.println("Lỗi: productId hoặc quantity không hợp lệ: " + productIdParam + ", " + quantityParam);
+            req.setAttribute("errorMessage", "Dữ liệu sản phẩm hoặc số lượng không hợp lệ.");
+            resp.sendRedirect(req.getContextPath() + "/home?error=invalid_input");
+        }
     }
 
     private void updateCart(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        String productId = req.getParameter("productId");
-        String newQuantity = req.getParameter("quantity");
-        resp.sendRedirect(req.getContextPath() + "/cart");
+        String cartIdParam = req.getParameter("cartId"); // Tên tham số là 'cartId'
+        String newQuantityParam = req.getParameter("quantity"); // Tên tham số là 'quantity'
+
+        int cartId = 0;
+        int newQuantity = 0;
+        String redirectUrl = req.getContextPath() + "/cart"; // URL mặc định để chuyển hướng
+
+        try {
+            cartId = Integer.parseInt(cartIdParam);
+            newQuantity = Integer.parseInt(newQuantityParam);
+
+            if (newQuantity <= 0) {
+                // Nếu số lượng là 0 hoặc âm, có thể yêu cầu xóa hoặc cảnh báo
+                resp.sendRedirect(redirectUrl + "?error=invalid_quantity");
+                return;
+            }
+
+            // Gọi CartService để cập nhật giỏ hàng
+            boolean success = CartService.updateCartItem(req, cartId, newQuantity);
+
+            if (success) {
+                redirectUrl += "?success=updated";
+                resp.sendRedirect(redirectUrl);
+            } else {
+                resp.sendRedirect(redirectUrl + "?error=update_failed");
+            }
+
+        } catch (NumberFormatException e) {
+            System.err.println("Lỗi: cartId hoặc newQuantity không hợp lệ: " + cartIdParam + ", " + newQuantityParam);
+            resp.sendRedirect(redirectUrl + "?error=invalid_input");
+        }
     }
 
     private void removeFromCart(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        String productId = req.getParameter("productId");
-        resp.sendRedirect(req.getContextPath() + "/cart");
+        String cartIdParam = req.getParameter("cartId"); // Tên tham số là 'cartId'
+
+        int cartId = 0;
+        String redirectUrl = req.getContextPath() + "/cart"; // URL mặc định để chuyển hướng
+
+        try {
+            cartId = Integer.parseInt(cartIdParam);
+
+            // Gọi CartService để xóa sản phẩm khỏi giỏ hàng
+            boolean success = CartService.deleteCartItem(req, cartId);
+
+            if (success) {
+                redirectUrl += "?success=removed";
+                resp.sendRedirect(redirectUrl);
+            } else {
+                resp.sendRedirect(redirectUrl + "?error=remove_failed");
+            }
+
+        } catch (NumberFormatException e) {
+            System.err.println("Lỗi: cartId không hợp lệ: " + cartIdParam);
+            resp.sendRedirect(redirectUrl + "?error=invalid_input");
+        }
     }
 
     private void processCheckout(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
