@@ -161,51 +161,21 @@ public class CartModel {
         }
         return null;
     }
-    public static Cart getCartItemByUserIdAndProductIdAndStatus(int userId, int productId, int status) throws SQLException {
-        String sql = "SELECT c.id, c.quantity, c.status, c.priceTotal, " +
-                "p.id AS product_id, p.name AS product_name, p.price AS product_unit_price, p.quantity AS product_quantity_in_stock, " +
-                "u.id AS user_id, u.name AS user_name " +
-                "FROM carts c " +
-                "JOIN products p ON c.product_id = p.id " +
-                "JOIN users u ON c.user_id = u.id " +
-                "WHERE c.user_id = ? AND c.product_id = ? AND c.status = ?";
+
+    public static boolean updateCartStatus(int userId) throws SQLException {
         Connection conn = null;
-        PreparedStatement preparedStatement = null;
-        ResultSet resultSet = null;
+        PreparedStatement pstmt = null;
         try {
             conn = DatabaseModel.getConnection();
-            preparedStatement = conn.prepareStatement(sql);
-            preparedStatement.setInt(1, userId);
-            preparedStatement.setInt(2, productId);
-            preparedStatement.setInt(3, status);
-            resultSet = preparedStatement.executeQuery();
-
-            if (resultSet.next()) {
-                Product product = new Product();
-                product.setId(resultSet.getInt("product_id"));
-                product.setName(resultSet.getString("product_name"));
-                product.setPrice(resultSet.getDouble("product_unit_price"));
-                product.setQuantity(resultSet.getInt("product_quantity_in_stock"));
-
-                User user = new User();
-                user.setId(resultSet.getInt("user_id"));
-                user.setName(resultSet.getString("user_name"));
-
-                Cart cartItem = new Cart(
-                        resultSet.getInt("quantity"),
-                        resultSet.getInt("status"),
-                        resultSet.getDouble("priceTotal"),
-                        product,
-                        user
-                );
-                cartItem.setId(resultSet.getInt("id"));
-                return cartItem;
-            }
+            String sql = "UPDATE carts SET status = ? WHERE user_id = ? AND status = 1";
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setInt(1, 0);
+            pstmt.setInt(2, userId);
+            int rowsAffected = pstmt.executeUpdate();
+            return rowsAffected > 0;
         } finally {
-            if (resultSet != null) resultSet.close();
-            if (preparedStatement != null) preparedStatement.close();
+            if (pstmt != null) pstmt.close();
             if (conn != null) conn.close();
         }
-        return null;
     }
 }

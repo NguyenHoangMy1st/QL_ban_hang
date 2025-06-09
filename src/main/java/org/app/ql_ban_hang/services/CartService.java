@@ -156,4 +156,14 @@ public class CartService {
             return false;
         }
     }
+    public static boolean clearCart(int userId) {
+        try {
+
+            return CartModel.updateCartStatus(userId);
+        } catch (SQLException e) {
+            System.err.println("Error clearing/updating cart for user " + userId + ": " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
 }

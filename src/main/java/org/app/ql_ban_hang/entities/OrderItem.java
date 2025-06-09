@@ -32,4 +32,10 @@ public class OrderItem {
     public void setProduct(Product product) { this.product = product; }
     public void setQuantity(int quantity) { this.quantity = quantity; }
     public void setPriceAtPurchase(double priceAtPurchase) { this.priceAtPurchase = priceAtPurchase; }
+    public double getSubtotal() {
+        if (priceAtPurchase == 0 || quantity < 0) {
+            return 0;
+        }
+        return priceAtPurchase*quantity;
+    }
 }

@@ -26,6 +26,7 @@ public class Order {
         this.user = user;
         this.orderItems = orderItems;
     }
+    // Constructor cho việc tạo Order mới (từ form)
     public Order(String name, String address, String phone, int paymentMethod, int status, double totalMoney, User user) {
         this.name = name;
         this.address = address;
@@ -65,5 +66,23 @@ public class Order {
             this.orderItems = new ArrayList<>();
         }
         this.orderItems.add(item);
+    }
+    public String getPaymentMethodName() {
+        switch (paymentMethod) {
+            case 1: return "COD";
+            case 2: return "Bank Transfer";
+            default: return "Unknown";
+        }
+    }
+
+    public String getStatusName() {
+        switch (status) {
+            case 1: return "Pending";
+            case 2: return "Processing";
+            case 3: return "Shipped";
+            case 4: return "Delivered";
+            case 5: return "Cancelled";
+            default: return "Unknown";
+        }
     }
 }

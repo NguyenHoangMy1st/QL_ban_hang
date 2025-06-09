@@ -242,9 +242,26 @@ public class AdminController extends BaseController {
         renderView("/views/admin/user/create.jsp", req, resp);
     }
     private void showFormEditUser(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        User currentUser = UserService.getUserById(req, resp);
-        req.setAttribute("user", currentUser);
-        renderView("/views/admin/user/edit.jsp", req, resp);
+        String idParam = req.getParameter("id");
+        if (idParam == null || idParam.isEmpty()) {
+            req.setAttribute("errorMessage", "Không tìm thấy ID người dùng để chỉnh sửa.");
+            renderView("/views/admin/user/list.jsp", req, resp);
+            return;
+        }
+        try{
+            int userId  = Integer.parseInt(idParam);
+            User currentUser = UserService.getUserById(userId);
+            if (currentUser != null) {
+                req.setAttribute("user", currentUser);
+                renderView("/views/admin/user/edit.jsp", req, resp);
+            } else {
+                req.setAttribute("errorMessage", "Không tìm thấy người dùng với ID: " + userId);
+                renderView("/views/admin/user/list.jsp", req, resp);
+            }
+        }catch(Exception e){
+            req.setAttribute("errorMessage", e.getMessage());
+            renderView("/views/admin/user/list.jsp", req, resp);
+        }
     }
     public void showCategory(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         List<Category> categories = ProductService.getCategories();

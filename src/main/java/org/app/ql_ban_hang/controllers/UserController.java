@@ -6,19 +6,19 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import org.app.ql_ban_hang.entities.Cart;
-import org.app.ql_ban_hang.entities.Category;
-import org.app.ql_ban_hang.entities.Product;
+import org.app.ql_ban_hang.entities.*;
 import org.app.ql_ban_hang.services.CartService;
 import org.app.ql_ban_hang.services.ProductService;
 import org.app.ql_ban_hang.services.UserService;
+import org.app.ql_ban_hang.services.OrderService;
 
 import java.io.IOException;
 import java.net.URLEncoder;
+import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
 
-@WebServlet(name = "UserController", urlPatterns = {"/home", "/products/*", "/product/*", "/cart/*", "/checkout", "/orders", "/profile"})
+@WebServlet(name = "UserController", urlPatterns = {"/home", "/products/*", "/product/*", "/cart/*", "/checkout", "/orders", "/profile", "/buy"})
 public class UserController extends BaseController {
 
     @Override
@@ -62,7 +62,7 @@ public class UserController extends BaseController {
             if (!checkUserLogin(req, resp)) {
                 return;
             }
-            showCheckoutPage(req, resp);
+            showCartPage(req, resp);
         } else if (requestURI.equals("/orders")) {
             if (!checkUserLogin(req, resp)) {
                 return;
@@ -277,22 +277,53 @@ public class UserController extends BaseController {
     }
 
     private void showCartPage(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        List<Cart> cartItems = CartService.getCartItemsForCurrentUser(req, 1);
-        for (int i = 0; i < cartItems.size(); i++) {
-            Cart item = cartItems.get(i);
+        HttpSession session = req.getSession(false);
+        Integer userIdObj = (session != null) ? (Integer) session.getAttribute("idUserLogin") : null;
+        if (userIdObj == null) {
+            resp.sendRedirect(req.getContextPath() + "/auth/login"); // Đã có checkUserLogin ở doGet
+            return;
         }
 
+        try {
+            int userId = userIdObj;
+            List<Cart> cartItems = CartService.getCartItemsForCurrentUser(req, 1);
+
+            User user = UserService.getUserById(userId);
+
+            if (cartItems == null) {
+                cartItems = Collections.emptyList();
+                System.err.println("Warning: CartService.getCartItemsForCurrentUser() returned null. Initializing with empty list.");
+            }
             req.setAttribute("cartItems", cartItems);
-        renderView("/views/users/cart.jsp", req, resp);
+            req.setAttribute("user", user);
+            renderView("/views/users/cart.jsp", req, resp);
+        } catch (NumberFormatException e) {
+            System.err.println("Error parsing userId from session: " + userIdObj);
+            resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Lỗi truy xuất thông tin người dùng.");
+        }
     }
 
-    private void showCheckoutPage(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        renderView("/views/users/checkout.jsp", req, resp);
-    }
+
 
     private void showUserOrdersPage(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        String userId = (String) req.getSession().getAttribute("idUserLogin");
-        renderView("/views/users/orders_history.jsp", req, resp);
+        HttpSession session = req.getSession(false);
+        Integer userIdObj = (session != null) ? (Integer) session.getAttribute("idUserLogin") : null;
+
+        if (userIdObj == null) {
+            resp.sendRedirect(req.getContextPath() + "/auth/login?redirect=" + req.getRequestURI());
+            return;
+        }
+
+        try {
+            int userId = userIdObj.intValue();
+            List<Order> userOrders = OrderService.getUserOrders(userId);
+
+            req.setAttribute("userOrders", userOrders);
+            renderView("/views/users/orders_history.jsp", req, resp);
+        } catch (ClassCastException e) {
+            System.err.println("Error: idUserLogin in session is not an Integer. " + e.getMessage());
+            resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Lỗi định dạng ID người dùng trong phiên.");
+        }
     }
 
     private void showProfilePage(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -335,24 +366,22 @@ public class UserController extends BaseController {
     }
 
     private void updateCart(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        String cartIdParam = req.getParameter("cartId"); // Tên tham số là 'cartId'
-        String newQuantityParam = req.getParameter("quantity"); // Tên tham số là 'quantity'
+        String cartIdParam = req.getParameter("cartId");
+        String newQuantityParam = req.getParameter("quantity");
 
         int cartId = 0;
         int newQuantity = 0;
-        String redirectUrl = req.getContextPath() + "/cart"; // URL mặc định để chuyển hướng
+        String redirectUrl = req.getContextPath() + "/cart";
 
         try {
             cartId = Integer.parseInt(cartIdParam);
             newQuantity = Integer.parseInt(newQuantityParam);
 
             if (newQuantity <= 0) {
-                // Nếu số lượng là 0 hoặc âm, có thể yêu cầu xóa hoặc cảnh báo
                 resp.sendRedirect(redirectUrl + "?error=invalid_quantity");
                 return;
             }
 
-            // Gọi CartService để cập nhật giỏ hàng
             boolean success = CartService.updateCartItem(req, cartId, newQuantity);
 
             if (success) {
@@ -369,15 +398,14 @@ public class UserController extends BaseController {
     }
 
     private void removeFromCart(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        String cartIdParam = req.getParameter("cartId"); // Tên tham số là 'cartId'
+        String cartIdParam = req.getParameter("cartId");
 
         int cartId = 0;
-        String redirectUrl = req.getContextPath() + "/cart"; // URL mặc định để chuyển hướng
+        String redirectUrl = req.getContextPath() + "/cart";
 
         try {
             cartId = Integer.parseInt(cartIdParam);
 
-            // Gọi CartService để xóa sản phẩm khỏi giỏ hàng
             boolean success = CartService.deleteCartItem(req, cartId);
 
             if (success) {
@@ -394,14 +422,69 @@ public class UserController extends BaseController {
     }
 
     private void processCheckout(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        boolean success = true;
-        if (success) {
-            resp.sendRedirect(req.getContextPath() + "/order/success");
-        } else {
-            resp.sendRedirect(req.getContextPath() + "/checkout?error=true");
+        HttpSession session = req.getSession(false);
+        Integer userIdObj = (session != null) ? (Integer) session.getAttribute("idUserLogin") : null;
+
+        if (userIdObj == null) {
+            resp.sendRedirect(req.getContextPath() + "/auth/login?redirect=" + URLEncoder.encode(req.getRequestURI(), "UTF-8"));
+            return;
+        }
+
+        try {
+            int userId = userIdObj;
+
+            String customerName = req.getParameter("name");
+            String deliveryAddress = req.getParameter("address");
+            String contactPhone = req.getParameter("phone");
+            int paymentMethod = Integer.parseInt(req.getParameter("paymentMethod"));
+            double totalMoney = Double.parseDouble(req.getParameter("totalMoney"));
+
+            if (customerName == null || customerName.trim().isEmpty() ||
+                    deliveryAddress == null || deliveryAddress.trim().isEmpty() ||
+                    contactPhone == null || contactPhone.trim().isEmpty() || totalMoney <= 0) {
+                resp.sendRedirect(req.getContextPath() + "/cart?error=invalid_input");
+                return;
+            }
+
+            List<Cart> cartItems = CartService.getCartItemsForCurrentUser(req, 1);
+
+            if (cartItems.isEmpty()) {
+                resp.sendRedirect(req.getContextPath() + "/cart?error=empty_cart_checkout");
+                return;
+            }
+
+            User user = UserService.getUserById(userId);
+            if (user == null) {
+                resp.sendRedirect(req.getContextPath() + "/cart?error=user_not_found");
+                return;
+            }
+
+            Order order = new Order(customerName, deliveryAddress, contactPhone, paymentMethod, 1, totalMoney, user);
+
+            boolean orderSuccess = OrderService.createOrderFromCart(order, cartItems);
+
+            if (orderSuccess) {
+                CartService.clearCart(userId);
+                resp.sendRedirect(req.getContextPath() + "/cart?success=order_placed");
+            } else {
+                resp.sendRedirect(req.getContextPath() + "/cart?error=order_failed");
+            }
+
+        } catch (NumberFormatException e) {
+            System.err.println("Lỗi định dạng số khi đặt hàng: " + e.getMessage());
+            resp.sendRedirect(req.getContextPath() + "/cart?error=invalid_input");
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.err.println("Lỗi SQL khi đặt hàng: " + e.getMessage());
+            if (e.getMessage() != null && e.getMessage().contains("stock_exceeded")) {
+                resp.sendRedirect(req.getContextPath() + "/cart?error=stock_exceeded");
+            } else if (e.getMessage() != null && e.getMessage().contains("cart_item_not_found")) {
+                resp.sendRedirect(req.getContextPath() + "/cart?error=cart_item_not_found");
+            } else {
+                resp.sendRedirect(req.getContextPath() + "/cart?error=order_failed");
+            }
         }
     }
-
     private void updateProfile(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         resp.sendRedirect(req.getContextPath() + "/profile?updated=true");
     }

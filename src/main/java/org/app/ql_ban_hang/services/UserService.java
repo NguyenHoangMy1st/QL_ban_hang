@@ -65,9 +65,8 @@ public class UserService {
             System.out.println("Error in updateUser()");
         }
     }
-    public static User getUserById(HttpServletRequest request, HttpServletResponse response) {
+    public static User getUserById(int id) {
         try{
-            int id = Integer.parseInt(request.getParameter("id"));
             ResultSet resultSet = UserModel.findById(id);
             User userUpdate = null;
             while (resultSet.next()) {
@@ -77,7 +76,7 @@ public class UserService {
                 String uPhone = resultSet.getString("phone");
                 String uAddress = resultSet.getString("address");
                 userUpdate = new User(uName, uEmail, uPhone, uAddress);
-                userUpdate.setId(id);
+                userUpdate.setId(uID);
             }
             return userUpdate;
 

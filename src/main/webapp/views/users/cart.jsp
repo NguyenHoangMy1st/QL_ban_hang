@@ -63,6 +63,13 @@
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <form class="d-flex mx-auto my-2 my-lg-0 flex-grow-1" role="search" style="max-width: 500px;"
+                  action="${pageContext.request.contextPath}/products/search" method="get">
+                <input class="form-control me-2" type="search" placeholder="Tìm kiếm sản phẩm..." aria-label="Search" name="name"
+                       value="${searchTerm != null ? searchTerm : ''}">
+                <button class="btn btn-outline-light" type="submit"><i class="fas fa-search"></i></button>
+            </form>
+
             <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-lg-center">
                 <li class="nav-item me-3">
                     <a class="nav-link text-white position-relative" href="${pageContext.request.contextPath}/cart">
@@ -130,6 +137,9 @@
                 <c:when test="${param.success eq 'removed'}">
                     <i class="fas fa-check-circle me-2"></i> Sản phẩm đã được xóa khỏi giỏ hàng!
                 </c:when>
+                <c:when test="${param.success eq 'order_placed'}">
+                    <i class="fas fa-check-circle me-2"></i> Đơn hàng của bạn đã được đặt thành công!
+                </c:when>
             </c:choose>
         </div>
     </c:if>
@@ -149,6 +159,18 @@
                 </c:when>
                 <c:when test="${param.error eq 'invalid_input'}">
                     Dữ liệu đầu vào không hợp lệ.
+                </c:when>
+                <c:when test="${param.error eq 'empty_cart_checkout'}">
+                    Giỏ hàng của bạn đang trống. Không thể tiến hành thanh toán.
+                </c:when>
+                <c:when test="${param.error eq 'order_failed'}">
+                    Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại.
+                </c:when>
+                <c:when test="${param.error eq 'stock_exceeded'}">
+                    Số lượng sản phẩm trong giỏ hàng vượt quá số lượng tồn kho. Vui lòng điều chỉnh lại.
+                </c:when>
+                <c:when test="${param.error eq 'cart_item_not_found'}">
+                    Một số sản phẩm trong giỏ hàng không còn tồn tại hoặc đã bị thay đổi. Vui lòng kiểm tra lại giỏ hàng.
                 </c:when>
                 <c:otherwise>
                     Đã xảy ra lỗi. Vui lòng thử lại.
@@ -181,7 +203,6 @@
                                         </div>
                                         <div class="d-flex align-items-center me-3">
                                             <form action="${pageContext.request.contextPath}/cart/update" method="post" class="d-flex align-items-center me-2">
-                                                    <%-- THAY ĐỔI: Sử dụng cartItem.id thay vì product.id --%>
                                                 <input type="hidden" name="cartId" value="${cartItem.id}">
                                                 <input type="number" name="quantity" value="${cartItem.quantity}" min="1" max="${product.quantity}" class="form-control quantity-input" onchange="this.form.submit()">
                                             </form>
@@ -190,7 +211,6 @@
                                             <fmt:formatNumber value="${itemTotalPrice}" type="currency" currencySymbol="VNĐ" maxFractionDigits="0"/>
                                         </div>
                                         <form action="${pageContext.request.contextPath}/cart/remove" method="post">
-                                                <%-- THAY ĐỔI: Sử dụng cartItem.id thay vì product.id --%>
                                             <input type="hidden" name="cartId" value="${cartItem.id}">
                                             <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('Bạn có chắc chắn muốn xóa sản phẩm này khỏi giỏ hàng?');">
                                                 <i class="fas fa-trash-alt"></i>
@@ -211,8 +231,8 @@
                                 <li class="list-group-item d-flex justify-content-between align-items-center">
                                     Tổng tiền hàng:
                                     <span class="fw-bold text-dark">
-                                            <fmt:formatNumber value="${totalCartPrice}" type="currency" currencySymbol="VNĐ" maxFractionDigits="0"/>
-                                        </span>
+                                        <fmt:formatNumber value="${totalCartPrice}" type="currency" currencySymbol="VNĐ" maxFractionDigits="0"/>
+                                    </span>
                                 </li>
                                 <li class="list-group-item d-flex justify-content-between align-items-center text-success">
                                     Phí vận chuyển:
@@ -221,13 +241,58 @@
                                 <li class="list-group-item d-flex justify-content-between align-items-center fs-5 text-primary">
                                     Tổng thanh toán:
                                     <span class="fw-bold">
-                                            <fmt:formatNumber value="${totalCartPrice}" type="currency" currencySymbol="VNĐ" maxFractionDigits="0"/>
-                                        </span>
+                                        <fmt:formatNumber value="${totalCartPrice}" type="currency" currencySymbol="VNĐ" maxFractionDigits="0"/>
+                                    </span>
                                 </li>
                             </ul>
-                            <div class="d-grid gap-2 mt-4">
-                                <a href="${pageContext.request.contextPath}/checkout" class="btn btn-primary btn-lg">Tiến hành thanh toán</a>
-                                <a href="${pageContext.request.contextPath}/products" class="btn btn-outline-secondary btn-lg">Tiếp tục mua sắm</a>
+                            <button class="btn btn-primary btn-lg w-100 mt-4" data-bs-toggle="collapse" data-bs-target="#checkoutForm" aria-expanded="false" aria-controls="checkoutForm">
+                                Tiến hành thanh toán
+                            </button>
+                            <a href="${pageContext.request.contextPath}/products" class="btn btn-outline-secondary btn-lg w-100 mt-2">Tiếp tục mua sắm</a>
+                        </div>
+                    </div>
+
+                    <div class="collapse mt-4" id="checkoutForm">
+                        <div class="card card-cart">
+                            <div class="card-body">
+                                <h5 class="card-title mb-4">Thông tin giao hàng và thanh toán</h5>
+                                <form action="${pageContext.request.contextPath}/checkout" method="post">
+                                    <div class="mb-3">
+                                        <label for="customerName" class="form-label">Họ và tên người nhận</label>
+                                        <input type="text" class="form-control" id="customerName" name="name" required
+                                               value="${user != null ? user.name : ''}">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="address" class="form-label">Địa chỉ giao hàng</label>
+                                        <input type="text" class="form-control" id="address" name="address" required
+                                               value="${user != null ? user.address : ''}">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="phone" class="form-label">Số điện thoại</label>
+                                        <input type="tel" class="form-control" id="phone" name="phone" required
+                                               value="${user != null ? user.phone : ''}">
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">Phương thức thanh toán</label>
+                                        <div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="paymentMethod" id="paymentCod" value="1" checked>
+                                                <label class="form-check-label" for="paymentCod">
+                                                    Thanh toán khi nhận hàng (COD)
+                                                </label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="paymentMethod" id="paymentBank" value="2">
+                                                <label class="form-check-label" for="paymentBank">
+                                                    Chuyển khoản ngân hàng
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <input type="hidden" name="totalMoney" value="${totalCartPrice}">
+                                    <button type="submit" class="btn btn-success btn-lg w-100">Xác nhận đặt hàng</button>
+                                </form>
                             </div>
                         </div>
                     </div>
